@@ -13,10 +13,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    private static final String INVALIDATION_MESSAGE = "Invalid File Type";
+    private static final String FILE_PATH = "src/main/resources/static/images/";
 
     @Autowired
     private UserService userService;
@@ -42,10 +51,23 @@ public class UserController {
 
 
     @PostMapping("/register/user")
-    public ResponseEntity<ApiResponse> registerUser(@RequestPart("user") UserDTO userDTO
-                                                    ) {
+    public ResponseEntity<ApiResponse> registerUser(@RequestPart("user") UserDTO userDTO,
+                                                    @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        if (userDTO != null){
+        if (userDTO != null) {
+            if (file != null && !file.isEmpty()) {
+                String fileName = file.getOriginalFilename();
+                if (fileName == null || !userService.isImageFile(fileName)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid File Type"));
+                }
+                try {
+                    Path path = Paths.get(FILE_PATH + fileName);
+                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                    userDTO.setProfileImage("/images/" + fileName);
+                } catch (IOException e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error"));
+                }
+            }
             userService.saveUserInRedis(userDTO);
             return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully"));
         }

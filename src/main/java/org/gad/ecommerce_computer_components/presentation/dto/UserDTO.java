@@ -26,7 +26,7 @@ public class UserDTO {
     private LocalDateTime creationDate;
     private LocalDateTime updateDate;
 
-    public UserDTO(Long id, String name, String lastName, String username, String email, String password, String address, String cellphone, String profileImage, String dni, Role role, AccountStatement accountStatus) {
+    public UserDTO(Long id, String name, String lastName, String username, String email, String password, String address, String cellphone, String dni, Role role, AccountStatement accountStatus) {
         this.id = id;
         this.name = name;
         this.lastName = lastName;
@@ -35,7 +35,6 @@ public class UserDTO {
         this.password = password;
         this.address = address;
         this.cellphone = cellphone;
-        this.profileImage = profileImage;
         this.dni = dni;
         this.role = role;
         this.accountStatus = accountStatus;

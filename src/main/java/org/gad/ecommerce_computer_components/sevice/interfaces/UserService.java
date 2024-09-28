@@ -13,4 +13,5 @@ public interface UserService {
     String generateToken();
     String verifyUserToken(VerifyUserToken verifyUserToken);
     UserDTO saveUser(UserDTO userDTO);
+    boolean isImageFile(String fileName);
 }

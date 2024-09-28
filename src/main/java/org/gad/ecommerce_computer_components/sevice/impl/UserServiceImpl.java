@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -27,6 +29,7 @@ public class UserServiceImpl implements UserService {
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final int TOKEN_LENGTH = 10;
+    private static final List<String> VALID_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
 
     @Autowired
     private EmailService emailService;
@@ -117,5 +120,11 @@ public class UserServiceImpl implements UserService {
         userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
         UserEntity savedUser = this.userRepository.save(userEntity);
         return UserMapper.INSTANCE.userEntityToUserDTO(savedUser);
+    }
+
+    @Override
+    public boolean isImageFile(String fileName) {
+        String fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        return VALID_EXTENSIONS.contains(fileExtension);
     }
 }
