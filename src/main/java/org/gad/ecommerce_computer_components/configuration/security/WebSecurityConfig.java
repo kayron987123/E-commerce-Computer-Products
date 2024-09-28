@@ -22,6 +22,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests((authz -> authz
                         .requestMatchers(HttpMethod.POST, "/users/login/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/verifyToken/user").permitAll()
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);

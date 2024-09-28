@@ -1,5 +1,6 @@
 package org.gad.ecommerce_computer_components.presentation.controller;
 
+import jakarta.mail.Multipart;
 import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
@@ -11,10 +12,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -44,12 +42,26 @@ public class UserController {
 
 
     @PostMapping("/register/user")
-    public ResponseEntity<ApiResponse> registerUser(@RequestBody UserDTO userDTO) {
-        return null;
+    public ResponseEntity<ApiResponse> registerUser(@RequestPart("user") UserDTO userDTO
+                                                    ) {
+
+        if (userDTO != null){
+            userService.saveUserInRedis(userDTO);
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Bad Request"));
     }
 
     @PostMapping("/verifyToken/user")
-    public ResponseEntity<String> verifyTokenUser(@RequestBody VerifyUserToken verifyUserToken) {
-        return null;
+    public ResponseEntity<ApiResponseToken> verifyTokenUser(@RequestBody VerifyUserToken verifyUserToken) {
+
+        if(verifyUserToken != null){
+            String token = userService.verifyUserToken(verifyUserToken);
+            if(token != null){
+                return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Token verified successfully", token));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Token not verified", null));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseToken(HttpStatus.BAD_REQUEST.value(), "Bad Request", null));
     }
 }
