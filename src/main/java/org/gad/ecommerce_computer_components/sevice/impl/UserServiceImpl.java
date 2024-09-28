@@ -5,7 +5,6 @@ import org.gad.ecommerce_computer_components.configuration.security.JWTAuthentic
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
 import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.UserRequest;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
 import org.gad.ecommerce_computer_components.sevice.interfaces.EmailService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
@@ -13,7 +12,6 @@ import org.gad.ecommerce_computer_components.utils.mappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,7 +20,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -30,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*-";
     private static final int TOKEN_LENGTH = 10;
     private static final List<String> VALID_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
+    private static final String USER_NOT_FOUND = "User not found";
 
     @Autowired
     private EmailService emailService;
@@ -46,14 +44,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO findByUsername(String username) {
         UserEntity user = userRepository.findByUsername(username);
+        if(user == null) {
+            throw new UsernameNotFoundException(USER_NOT_FOUND);
+        }
         return UserMapper.INSTANCE.userEntityToUserDTO(user);
     }
 
     @Override
-    public String authenticateUser(String username, String password) throws UsernameNotFoundException {
+    public String authenticateUser(String username, String password){
         UserEntity userResult = userRepository.findByUsername(username);
         if (userResult == null) {
-            throw new UsernameNotFoundException("User not found");
+            throw new UsernameNotFoundException(USER_NOT_FOUND);
         }
         if (new BCryptPasswordEncoder().matches(password, userResult.getPassword())) {
             return jwtAuthenticationConfig.getJWTToken(userResult);
@@ -86,31 +87,10 @@ public class UserServiceImpl implements UserService {
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
         Object userObj = ops.get(verifyUserToken.getToken());
 
-        if (userObj != null) {
-            UserDTO userDTO;
-            if (userObj instanceof Map) {
-                // Convert Map to UserDTO
-                Map<String, Object> userMap = (Map<String, Object>) userObj;
-                userDTO = new UserDTO();
-                userDTO.setName((String) userMap.get("name"));
-                userDTO.setLastName((String) userMap.get("lastName"));
-                userDTO.setUsername((String) userMap.get("username"));
-                userDTO.setEmail((String) userMap.get("email"));
-                userDTO.setPassword((String) userMap.get("password"));
-                userDTO.setAddress((String) userMap.get("address"));
-                userDTO.setCellphone((String) userMap.get("cellphone"));
-                userDTO.setProfileImage((String) userMap.get("profileImage"));
-                userDTO.setDni((String) userMap.get("dni"));
-                // Set other fields as necessary
-            } else if (userObj instanceof UserDTO) {
-                userDTO = (UserDTO) userObj;
-            } else {
-                throw new IllegalStateException("Unexpected object type in Redis");
-            }
-
+        if (userObj instanceof UserDTO) {
+            UserDTO userDTO = (UserDTO) userObj;
             this.saveUser(userDTO);
             String tokenJWT = this.authenticateUser(userDTO.getUsername(), userDTO.getPassword());
-
             redisTemplate.delete(verifyUserToken.getToken());
             return tokenJWT;
         }
@@ -118,6 +98,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDTO saveUser(UserDTO userDTO) {
         UserEntity userEntity = UserMapper.INSTANCE.userDTOToUserEntity(userDTO);
         userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
