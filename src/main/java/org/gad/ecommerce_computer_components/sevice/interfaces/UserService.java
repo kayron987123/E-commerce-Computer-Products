@@ -5,7 +5,7 @@ import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
 
 public interface UserService {
-    UserEntity findByUsername(String username);
+    UserDTO findByUsername(String username);
     String authenticateUser(String username, String password);
 
 
@@ -14,4 +14,6 @@ public interface UserService {
     String verifyUserToken(VerifyUserToken verifyUserToken);
     UserDTO saveUser(UserDTO userDTO);
     boolean isImageFile(String fileName);
+
+    UserDTO findByEmail(String email);
 }

@@ -27,7 +27,7 @@ import java.util.Map;
 @Service
 public class UserServiceImpl implements UserService {
 
-    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*-";
     private static final int TOKEN_LENGTH = 10;
     private static final List<String> VALID_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png");
 
@@ -44,8 +44,9 @@ public class UserServiceImpl implements UserService {
     private RedisTemplate<String, Object> redisTemplate;
 
     @Override
-    public UserEntity findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public UserDTO findByUsername(String username) {
+        UserEntity user = userRepository.findByUsername(username);
+        return UserMapper.INSTANCE.userEntityToUserDTO(user);
     }
 
     @Override
@@ -65,7 +66,7 @@ public class UserServiceImpl implements UserService {
         String token = generateToken();
         emailService.sendEmailTemporaryKey(userDTO.getEmail(), token);
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-        ops.set(token, userDTO, Duration.ofMinutes(5));
+        ops.set(token, userDTO, Duration.ofMinutes(1));
     }
 
     @Override
@@ -109,6 +110,8 @@ public class UserServiceImpl implements UserService {
 
             this.saveUser(userDTO);
             String tokenJWT = this.authenticateUser(userDTO.getUsername(), userDTO.getPassword());
+
+            redisTemplate.delete(verifyUserToken.getToken());
             return tokenJWT;
         }
         return null;
@@ -126,5 +129,11 @@ public class UserServiceImpl implements UserService {
     public boolean isImageFile(String fileName) {
         String fileExtension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         return VALID_EXTENSIONS.contains(fileExtension);
+    }
+
+    @Override
+    public UserDTO findByEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+        return UserMapper.INSTANCE.userEntityToUserDTO(user);
     }
 }

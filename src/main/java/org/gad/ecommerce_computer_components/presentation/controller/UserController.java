@@ -1,12 +1,15 @@
 package org.gad.ecommerce_computer_components.presentation.controller;
 
 import jakarta.mail.Multipart;
+import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.UserRecoverPassword;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
 import org.gad.ecommerce_computer_components.presentation.dto.UserRequest;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
+import org.gad.ecommerce_computer_components.utils.mappers.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -69,7 +72,7 @@ public class UserController {
                 }
             }
             userService.saveUserInRedis(userDTO);
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully"));
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully and Token generated"));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Bad Request"));
     }
@@ -85,5 +88,19 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Token not verified", null));
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponseToken(HttpStatus.BAD_REQUEST.value(), "Bad Request", null));
+    }
+
+    @PostMapping("/recoverPassword/user")
+    public ResponseEntity<ApiResponse> recoverPassword(@RequestBody UserRecoverPassword userRecoverPassword){
+        if (userRecoverPassword != null){
+            if(userRecoverPassword.getFirstPassword().equals(userRecoverPassword.getSecondPassword())){
+                UserDTO userDTO = userService.findByEmail(userRecoverPassword.getEmail());
+                userDTO.setPassword(userRecoverPassword.getFirstPassword());
+                userService.saveUserInRedis(userDTO);
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User found successfully and Token generated"));
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Passwords do not match"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Bad Request"));
     }
 }

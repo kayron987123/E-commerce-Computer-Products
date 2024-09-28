@@ -23,6 +23,7 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users/login/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/verifyToken/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/recoverPassword/user").permitAll()
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);
