@@ -20,7 +20,8 @@ public class WebSecurityConfig {
         http
                 .csrf((csrf -> csrf.disable()))
                 .authorizeHttpRequests((authz -> authz
-                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/login/user").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);

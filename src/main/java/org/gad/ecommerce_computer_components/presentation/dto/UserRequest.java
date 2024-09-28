@@ -3,7 +3,7 @@ package org.gad.ecommerce_computer_components.presentation.dto;
 import lombok.Data;
 
 @Data
-public class AuthRequest {
+public class UserRequest {
     private String username;
     private String password;
 }
