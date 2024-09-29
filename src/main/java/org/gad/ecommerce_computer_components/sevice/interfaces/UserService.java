@@ -4,6 +4,9 @@ import io.jsonwebtoken.Claims;
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
+import org.springframework.security.core.userdetails.User;
+
+import java.util.Optional;
 
 public interface UserService {
     UserDTO findByUsername(String username);
@@ -20,4 +23,5 @@ public interface UserService {
 
     Claims extractClaimsFromJWT(String tokenJWT);
     UserDTO deleteUser(String email);
+    Optional<UserDTO> findById(Long id);
 }

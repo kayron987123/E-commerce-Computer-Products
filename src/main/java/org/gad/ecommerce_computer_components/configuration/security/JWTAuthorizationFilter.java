@@ -38,15 +38,17 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     }
 
     private void setAuthentication(Claims claims, UserEntity entity) {
-        List<GrantedAuthority> authorities;
-        if (entity.getId() != null && !entity.getAccountStatus().name().equals(AccountStatement.ELIMINADO.name())) {
-            List<String> roles = Collections.singletonList(entity.getRole().name());
-            authorities = roles.stream()
-                    .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol))
-                    .collect(Collectors.toList());
-        } else {
-            authorities = Collections.emptyList();
+        if (entity.getId() == null) {
+            throw new IllegalArgumentException("The user has not been found.");
         }
+        if (entity.getAccountStatus().name().equals(AccountStatement.ELIMINADO.name())) {
+            throw new IllegalStateException("You cannot log in because your username has been deleted.");
+        }
+
+        List<String> roles = Collections.singletonList(entity.getRole().name());
+        List<GrantedAuthority> authorities = roles.stream()
+                .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol))
+                .collect(Collectors.toList());
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(claims.getSubject(), null, authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);

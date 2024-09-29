@@ -2,6 +2,7 @@ package org.gad.ecommerce_computer_components.configuration.security;
 
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
@@ -14,7 +15,7 @@ public class Constants {
 
     //Constantes para JWT
     public static final String SUPER_SECRET_KEY = "ZnJhc2VzbGFyZ2FzcGFyYWNvbG9jYXJjb21vY2xhdmVlbnVucHJvamVjdG9kZWVtZXBsb3BhcmFqd3Rjb25zcHJpbmdzZWN1cml0eQbWlwcnVlYmFkZWVgYGFyYWJhc2U2MxMjM0NTY3ODk=";
-    public static final long TOKEN_EXPIRATION_TIME = 360_000; // 3 minutos
+    public static final long TOKEN_EXPIRATION_TIME = 1_200_000; // 20 minutos
 
     public static Key getSigningKey(String secretKey) {
         byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
@@ -32,7 +33,7 @@ public class Constants {
     public static void main(String[] args) {
         String encryptedPassword = encryptPassword("123456");
         System.out.println(encryptedPassword);
-        Boolean verify = verifyPassword("123456", encryptedPassword);
+        Boolean verify = verifyPassword("123456", "$2a$10$xyg0zgmCGVeY6ByEEHAqXeQCm/O2O5WE.BgwhALae/yRSERUPtk6.");
         System.out.println(verify);
     }
 }

@@ -2,6 +2,7 @@ package org.gad.ecommerce_computer_components.presentation.controller;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
 import org.gad.ecommerce_computer_components.presentation.dto.*;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,6 +20,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Optional;
+
+import static org.gad.ecommerce_computer_components.persistence.enums.AccountStatement.ACTIVO;
+import static org.gad.ecommerce_computer_components.persistence.enums.AccountStatement.ELIMINADO;
+import static org.gad.ecommerce_computer_components.persistence.enums.Role.ADMINISTRADOR;
 
 @RestController
 @RequestMapping("/users")
@@ -33,6 +40,11 @@ public class UserController {
     @PostMapping("/login/user")
     public ResponseEntity<ApiResponseToken> loginUser(@RequestBody UserRequest userRequest) {
         try {
+            UserDTO userDTO = userService.findByUsername(userRequest.getUsername());
+            if (userDTO.getAccountStatus().name().equals(ELIMINADO.name())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Cannot authenticate a deleted user.", null));
+            }
             String token = userService.authenticateUser(userRequest.getUsername(), userRequest.getPassword());
             ApiResponseToken response = new ApiResponseToken(HttpStatus.OK.value(), "Successful authentication", token);
             return ResponseEntity.ok(response);
@@ -91,35 +103,40 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Passwords do not match or invalid data"));
     }
 
+    @PutMapping("/update/user")
     public ResponseEntity<ApiResponse> updateUser(@RequestHeader(value = "Authorization") String authorizationHeader,
                                                   @RequestPart(value = "user", required = false) UserDTO userDTO,
                                                   @RequestPart(value = "file", required = false) MultipartFile file) {
-
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String tokenJWT = authorizationHeader.substring(7);
                 Claims claims = userService.extractClaimsFromJWT(tokenJWT);
-                String username = claims.get("username", String.class);
-                UserDTO userFinded = userService.findByUsername(username);
+                String email = claims.get("email", String.class);
+                UserDTO userFinded = userService.findByEmail(email);
 
                 if (userFinded == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
                 }
 
+                // Actualización de la imagen, si se proporciona
                 if (file != null && !file.isEmpty()) {
                     String fileName = file.getOriginalFilename();
                     if (fileName == null || !userService.isImageFile(fileName)) {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), INVALIDATION_MESSAGE));
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                                .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid image file"));
                     }
                     try {
                         Path path = Paths.get(FILE_PATH + fileName);
                         Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                        userDTO.setProfileImage("/images/" + fileName);
+                        userFinded.setProfileImage("/images/" + fileName);
                     } catch (IOException e) {
                         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error"));
+                                .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving image"));
                     }
                 }
+
+                // Actualización de los datos del UserDTO, si se proporciona
                 if (userDTO != null) {
                     if (userDTO.getName() != null) userFinded.setName(userDTO.getName());
                     if (userDTO.getLastName() != null) userFinded.setLastName(userDTO.getLastName());
@@ -128,18 +145,52 @@ public class UserController {
                     if (userDTO.getPassword() != null) userFinded.setPassword(userDTO.getPassword());
                     if (userDTO.getAddress() != null) userFinded.setAddress(userDTO.getAddress());
                     if (userDTO.getCellphone() != null) userFinded.setCellphone(userDTO.getCellphone());
-                    if (userDTO.getProfileImage() != null) userFinded.setProfileImage(userDTO.getProfileImage());
                     if (userDTO.getDni() != null) userFinded.setDni(userDTO.getDni());
                 }
-                UserDTO userUpdated = userService.saveUser(userFinded);
+
+                // Guarda los cambios en la base de datos
+                userService.saveUser(userFinded);
                 return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User updated successfully"));
             }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
         }
     }
 
+    @PutMapping("/updateStatus/user/{id}")
+    public ResponseEntity<ApiResponse> updateStatusUser(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                        @PathVariable Long id){
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String tokenJWT = authorizationHeader.substring(7);
+                Claims claims = userService.extractClaimsFromJWT(tokenJWT);
+                String role = claims.get("role", String.class);
+                if(role.equals(ADMINISTRADOR.name())){
+                    Optional<UserDTO> userDTOOptional = userService.findById(id);
+                    if(!userDTOOptional.isPresent()){
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+                    }
+                    UserDTO currentUser = userDTOOptional.get();
+                    currentUser.setAccountStatus(ACTIVO);
+                    userService.saveUser(currentUser);
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User status updated successfully"));
+                }
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Action invalid due to its role"));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user status: " + e.getMessage()));
+        }
+    }
 
     @DeleteMapping("/delete/user")
     public ResponseEntity<ApiResponse> deleteUser(@RequestHeader(value = "Authorization") String authorizationHeader) {

@@ -23,6 +23,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.gad.ecommerce_computer_components.configuration.security.Constants.*;
 
@@ -114,7 +115,9 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserDTO saveUser(UserDTO userDTO) {
         UserEntity userEntity = UserMapper.INSTANCE.userDTOToUserEntity(userDTO);
-        userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+        if(userEntity.getPassword() != null && !userEntity.getPassword().startsWith("$2a$")){
+            userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+        }
         UserEntity savedUser = this.userRepository.save(userEntity);
         return UserMapper.INSTANCE.userEntityToUserDTO(savedUser);
     }
@@ -180,5 +183,14 @@ public class UserServiceImpl implements UserService {
         emailService.sendEmailToDeleteUser(userDTO.getEmail());
         userRepository.save(UserMapper.INSTANCE.userDTOToUserEntity(userDTO));
         return userDTO;
+    }
+
+    @Override
+    public Optional<UserDTO> findById(Long id) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            return Optional.of(UserMapper.INSTANCE.userEntityToUserDTO(userOptional.get()));
+        }
+        return Optional.empty();
     }
 }

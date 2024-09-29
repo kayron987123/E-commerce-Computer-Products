@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 
+import static org.gad.ecommerce_computer_components.persistence.enums.Role.*;
+
 @EnableWebSecurity
 @Configuration
 public class WebSecurityConfig {
@@ -24,7 +26,9 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/verifyToken/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/recoverPassword/user").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/users/delete/user").hasRole("USUARIO")
+                        .requestMatchers(HttpMethod.DELETE, "/users/delete/user").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.PUT, "/users/update/").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.PUT, "/users/updateStatus/user/{id}").hasRole(ADMINISTRADOR.name())
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);
