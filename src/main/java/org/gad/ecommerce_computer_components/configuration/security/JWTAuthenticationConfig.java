@@ -31,6 +31,7 @@ public class JWTAuthenticationConfig {
                         grantedAuthorities.stream()
                                 .map(GrantedAuthority::getAuthority)
                                 .collect(Collectors.toList()))
+                .claim("id", user.getId())
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("lastName", user.getLastName())

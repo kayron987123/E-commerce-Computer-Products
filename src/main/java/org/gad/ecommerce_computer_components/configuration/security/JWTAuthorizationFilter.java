@@ -37,17 +37,14 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
                 .getBody();
     }
 
-    private void setAuthentication(Claims claims, UserEntity entity){
+    private void setAuthentication(Claims claims, UserEntity entity) {
         List<GrantedAuthority> authorities;
-        if(entity.getId() != null
-                && entity.getRole().name() != null
-                && entity.getAccountStatus().name() != null
-                && !entity.getAccountStatus().name().equals(AccountStatement.SUSPENDIDO.name())){
+        if (entity.getId() != null && !entity.getAccountStatus().name().equals(AccountStatement.ELIMINADO.name())) {
             List<String> roles = Collections.singletonList(entity.getRole().name());
             authorities = roles.stream()
                     .map(rol -> new SimpleGrantedAuthority("ROLE_" + rol))
                     .collect(Collectors.toList());
-        }else {
+        } else {
             authorities = Collections.emptyList();
         }
 
@@ -55,9 +52,9 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
-    private boolean isJWTValid(HttpServletRequest request, HttpServletResponse response){
+    private boolean isJWTValid(HttpServletRequest request, HttpServletResponse response) {
         String authorizationHeader = request.getHeader(HEADER_AUTHORIZATION_KEY);
-        if(authorizationHeader == null || !authorizationHeader.startsWith(TOKEN_BEARER_PREFIX)){
+        if (authorizationHeader == null || !authorizationHeader.startsWith(TOKEN_BEARER_PREFIX)) {
             return false;
         }
         return true;
@@ -67,20 +64,20 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         try {
-            if(isJWTValid(request, response)){
+            if (isJWTValid(request, response)) {
                 Claims claims = setSigningKey(request);
                 String username = claims.getSubject();
                 UserEntity user = userRepository.findByUsername(username);
-                if(user != null){
+                if (user != null) {
                     setAuthentication(claims, user);
-                }else {
+                } else {
                     SecurityContextHolder.clearContext();
                 }
-            }else {
+            } else {
                 SecurityContextHolder.clearContext();
             }
             filterChain.doFilter(request, response);
-        }catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException e){
+        } catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException e) {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
         }

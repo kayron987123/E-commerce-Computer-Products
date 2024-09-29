@@ -24,8 +24,8 @@ import java.nio.file.StandardCopyOption;
 public class UserController {
     private static final String INVALIDATION_MESSAGE = "Invalid File Type";
     private static final String FILE_PATH = "src/main/resources/static/images/";
-    private static final String EMAIL_SEND_TOKEN ="TOKEN";
-    private static final String EMAIL_UPDATE_PASSWORD ="UPDATE";
+    private static final String EMAIL_SEND_TOKEN = "TOKEN";
+    private static final String EMAIL_UPDATE_PASSWORD = "UPDATE";
 
     @Autowired
     private UserService userService;
@@ -90,6 +90,56 @@ public class UserController {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Passwords do not match or invalid data"));
     }
+
+    public ResponseEntity<ApiResponse> updateUser(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                  @RequestPart(value = "user", required = false) UserDTO userDTO,
+                                                  @RequestPart(value = "file", required = false) MultipartFile file) {
+
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String tokenJWT = authorizationHeader.substring(7);
+                Claims claims = userService.extractClaimsFromJWT(tokenJWT);
+                String username = claims.get("username", String.class);
+                UserDTO userFinded = userService.findByUsername(username);
+
+                if (userFinded == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+                }
+
+                if (file != null && !file.isEmpty()) {
+                    String fileName = file.getOriginalFilename();
+                    if (fileName == null || !userService.isImageFile(fileName)) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), INVALIDATION_MESSAGE));
+                    }
+                    try {
+                        Path path = Paths.get(FILE_PATH + fileName);
+                        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                        userDTO.setProfileImage("/images/" + fileName);
+                    } catch (IOException e) {
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error"));
+                    }
+                }
+                if (userDTO != null) {
+                    if (userDTO.getName() != null) userFinded.setName(userDTO.getName());
+                    if (userDTO.getLastName() != null) userFinded.setLastName(userDTO.getLastName());
+                    if (userDTO.getUsername() != null) userFinded.setUsername(userDTO.getUsername());
+                    if (userDTO.getEmail() != null) userFinded.setEmail(userDTO.getEmail());
+                    if (userDTO.getPassword() != null) userFinded.setPassword(userDTO.getPassword());
+                    if (userDTO.getAddress() != null) userFinded.setAddress(userDTO.getAddress());
+                    if (userDTO.getCellphone() != null) userFinded.setCellphone(userDTO.getCellphone());
+                    if (userDTO.getProfileImage() != null) userFinded.setProfileImage(userDTO.getProfileImage());
+                    if (userDTO.getDni() != null) userFinded.setDni(userDTO.getDni());
+                }
+                UserDTO userUpdated = userService.saveUser(userFinded);
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User updated successfully"));
+            }
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
+        }
+    }
+
 
     @DeleteMapping("/delete/user")
     public ResponseEntity<ApiResponse> deleteUser(@RequestHeader(value = "Authorization") String authorizationHeader) {
