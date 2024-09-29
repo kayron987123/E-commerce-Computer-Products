@@ -1,5 +1,6 @@
 package org.gad.ecommerce_computer_components.presentation.dto;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ public class UserDTO {
     private String lastName;
     private String username;
     private String email;
+    @NotNull(message = "Password cannot be null")
     private String password;
     private String address;
     private String cellphone;

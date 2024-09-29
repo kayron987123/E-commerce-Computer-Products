@@ -24,6 +24,7 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/verifyToken/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/recoverPassword/user").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/users/delete/user").hasRole("USUARIO")
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);

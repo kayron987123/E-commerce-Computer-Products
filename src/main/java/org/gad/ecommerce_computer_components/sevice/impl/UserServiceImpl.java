@@ -1,8 +1,11 @@
 package org.gad.ecommerce_computer_components.sevice.impl;
 
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.transaction.Transactional;
 import org.gad.ecommerce_computer_components.configuration.security.JWTAuthenticationConfig;
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
+import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
 import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
@@ -20,6 +23,8 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.gad.ecommerce_computer_components.configuration.security.Constants.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -63,9 +68,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void saveUserInRedis(UserDTO userDTO) {
+    public void saveUserInRedis(UserDTO userDTO, String emailKey) {
         String token = generateToken();
-        emailService.sendEmailTemporaryKey(userDTO.getEmail(), token);
+
+        if(emailKey.equals("TOKEN")){
+            emailService.sendEmailTemporaryKey(userDTO.getEmail(), token);
+        } else if (emailKey.equals("UPDATE")){
+            emailService.sendEmailTemporaryKeyUpdate(userDTO.getEmail(), token);
+        }else {
+            throw new RuntimeException("Invalid email key");
+        }
+
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
         ops.set(token, userDTO, Duration.ofMinutes(1));
     }
@@ -116,5 +129,56 @@ public class UserServiceImpl implements UserService {
     public UserDTO findByEmail(String email) {
         UserEntity user = userRepository.findByEmail(email);
         return UserMapper.INSTANCE.userEntityToUserDTO(user);
+    }
+
+    @Override
+    public Claims extractClaimsFromJWT(String tokenJWT) {
+        try {
+            // Elimina el prefijo "Bearer " si está presente
+            if (tokenJWT.startsWith("Bearer ")) {
+                tokenJWT = tokenJWT.substring(7);
+            }
+
+            // Log del token para debugging
+            System.out.println("Token to parse: " + tokenJWT);
+
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey(SUPER_SECRET_KEY))
+                    .build()
+                    .parseClaimsJws(tokenJWT)
+                    .getBody();
+        } catch (IllegalArgumentException e) {
+            System.out.println("JWT claims string is empty: " + e.getMessage());
+            throw new RuntimeException("JWT claims string is empty", e);
+        } catch (ExpiredJwtException e) {
+            System.out.println("JWT token has expired: " + e.getMessage());
+            throw new RuntimeException("JWT token has expired", e);
+        } catch (UnsupportedJwtException e) {
+            System.out.println("Unsupported JWT token: " + e.getMessage());
+            throw new RuntimeException("Unsupported JWT token", e);
+        } catch (MalformedJwtException e) {
+            System.out.println("Invalid JWT token: " + e.getMessage());
+            throw new RuntimeException("Invalid JWT token", e);
+        } catch (SignatureException e) {
+            System.out.println("Invalid JWT signature: " + e.getMessage());
+            throw new RuntimeException("Invalid JWT signature", e);
+        } catch (Exception e) {
+            System.out.println("Error parsing JWT: " + e.getMessage());
+            throw new RuntimeException("Error parsing JWT: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public UserDTO deleteUser(String email) {
+        UserDTO userDTO = findByEmail(email);
+
+        if(userDTO == null) {
+            throw new RuntimeException("Usuario no fue encontrado");
+        }
+
+        userDTO.setAccountStatus(AccountStatement.ELIMINADO);
+        emailService.sendEmailToDeleteUser(userDTO.getEmail());
+        userRepository.save(UserMapper.INSTANCE.userDTOToUserEntity(userDTO));
+        return userDTO;
     }
 }

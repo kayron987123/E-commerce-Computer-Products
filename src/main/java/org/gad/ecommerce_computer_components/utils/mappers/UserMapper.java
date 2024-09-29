@@ -10,7 +10,6 @@ import org.mapstruct.factory.Mappers;
 public interface UserMapper {
     UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
 
-    @Mapping(target = "password", ignore = true)
     UserDTO userEntityToUserDTO(UserEntity userEntity);
 
     @Mapping(target = "creationDate", ignore = true)
@@ -19,4 +18,6 @@ public interface UserMapper {
     @Mapping(target = "accountStatus", source = "accountStatus", defaultValue = "ACTIVO")
     @Mapping(target = "profileImage", defaultValue = "default.jpg")
     UserEntity userDTOToUserEntity(UserDTO userDTO);
+
+
 }
