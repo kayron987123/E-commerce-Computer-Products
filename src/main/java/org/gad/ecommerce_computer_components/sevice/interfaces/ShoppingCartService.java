@@ -9,4 +9,7 @@ public interface ShoppingCartService {
     List<ShoppingCartDTO> getCart(Long userId);
     void removeProductFromCart(Long userId, ShoppingCartDTO shoppingCartDTO);
     void clearCart(Long userId);
+
+    Long extractUserIdFromToken(String authorizationHeader);
+
 }

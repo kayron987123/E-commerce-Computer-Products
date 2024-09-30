@@ -1,0 +1,8 @@
+package org.gad.ecommerce_computer_components.sevice.interfaces;
+
+import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
+
+public interface ProductService {
+    ProductStatus getProductStatus(Long id);
+    void updateProductStock(Long productId, int quantity);
+}
