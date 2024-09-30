@@ -22,6 +22,7 @@ public class WebSecurityConfig {
         http
                 .csrf((csrf -> csrf.disable()))
                 .authorizeHttpRequests((authz -> authz
+                        //ForUSers
                         .requestMatchers(HttpMethod.POST, "/users/login/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/register/user").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users/verifyToken/user").permitAll()
@@ -29,6 +30,12 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/users/delete/user").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.PUT, "/users/update/").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.PUT, "/users/updateStatus/user/{id}").hasRole(ADMINISTRADOR.name())
+
+                        //ForShoppingCart
+                        .requestMatchers(HttpMethod.POST, "/shopping-carts/addProduct/cart").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.GET, "/shopping-carts/getListCarts/cart").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.DELETE, "/shopping-carts/removeProduct/cart").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.DELETE, "/shopping-carts/clearCart").hasRole(USUARIO.name())
                         .anyRequest().authenticated()
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);
