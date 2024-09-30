@@ -1,8 +1,7 @@
 package org.gad.ecommerce_computer_components.presentation.controller;
 
-import io.jsonwebtoken.Claims;
-import org.gad.ecommerce_computer_components.persistence.entity.ShoppingCart;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
+import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseShoppingCart;
@@ -15,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.gad.ecommerce_computer_components.persistence.enums.ProductStatus.*;
 
@@ -55,8 +55,8 @@ public class ShoppingCartController {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
             if (idUser != null) {
-                List<ShoppingCartDTO> shoppingCartDTO = shoppingCartService.getCart(idUser);
-                return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.OK.value(), "Shopping cart retrieved successfully", shoppingCartDTO));
+                List<ListShoppingCartDTO> carItems = shoppingCartService.getCart(idUser);
+                return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.OK.value(), "Shopping cart retrieved successfully", carItems));
             }
             return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.BAD_REQUEST.value(), "Invalid token", null));
         } catch (Exception e) {

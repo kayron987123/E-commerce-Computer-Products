@@ -7,6 +7,7 @@ import org.gad.ecommerce_computer_components.persistence.entity.ShoppingCart;
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
+import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
@@ -93,11 +94,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
-    public List<ShoppingCartDTO> getCart(Long userId) {
+    public List<ListShoppingCartDTO> getCart(Long userId) {
         String key = CART_KEY_PREFIX + userId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
         return cartItems.stream()
-                .map(item -> ShoppingCartMapper.INSTANCE.toDTO((ShoppingCart) item))
+                .map(item -> ShoppingCartMapper.INSTANCE.toListDTO((ShoppingCart) item))
                 .collect(Collectors.toList());
     }
 
