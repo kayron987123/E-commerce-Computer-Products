@@ -36,7 +36,15 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/shopping-carts/getListCarts/cart").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.DELETE, "/shopping-carts/removeProduct/cart").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.DELETE, "/shopping-carts/clearCart").hasRole(USUARIO.name())
+
+                        //ForShoppingCartWithoutAuth
+                        .requestMatchers(HttpMethod.POST, "/noauth/shopping-carts/createTempCart/cart").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/noauth/shopping-carts/{cartId}/addProduct/cart").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/noauth/shopping-carts/{cartId}/getTempCartItems/cart").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/noauth/shopping-carts/{cartId}/removeProduct/cart").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/noauth/shopping-carts/{cartId}/clearTempCart/cart").permitAll()
                         .anyRequest().authenticated()
+
                 ))
                 .addFilterAfter(jwtAuthorizationFilter, SecurityContextPersistenceFilter.class);
 
