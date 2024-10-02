@@ -26,9 +26,6 @@ public class ShoppingCartController {
     private ShoppingCartService shoppingCartService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ProductService productService;
 
     @PostMapping("/addProduct/cart")
@@ -38,11 +35,20 @@ public class ShoppingCartController {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
             if (idUser != null) {
                 ProductStatus status = productService.getProductStatus(shoppingCartDTO.getProductId());
-                if (shoppingCartDTO != null || shoppingCartDTO.getProductId() != null || !status.equals(DESCONTINUADO.name()) || !status.equals(AGOTADO.name())) {
-                    shoppingCartService.addProductToCart(idUser, shoppingCartDTO);
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
+                if (shoppingCartDTO.getProductId() == 0 || shoppingCartDTO.getProductId() == null) {
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product"));
                 }
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product or status"));
+                if (shoppingCartDTO == null) {
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid shopping cart"));
+                }
+                if (!status.equals(DESCONTINUADO.name()) || !status.equals(AGOTADO.name())) {
+                    if (shoppingCartDTO.getAmount() > 0) {
+                        shoppingCartService.addProductToCart(idUser, shoppingCartDTO);
+                        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
+                    }
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
+                }
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product status"));
             }
             return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid token"));
         } catch (Exception e) {
@@ -69,10 +75,16 @@ public class ShoppingCartController {
                                                   @RequestBody ShoppingCartDTO shoppingCartDTO) {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
+            if (shoppingCartDTO == null) {
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid shopping cart"));
+            }
             if (idUser != null) {
-                if (shoppingCartDTO != null) {
-                    shoppingCartService.removeProductFromCart(idUser, shoppingCartDTO);
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
+                if (shoppingCartDTO.getProductId() != 0) {
+                    if (shoppingCartDTO.getAmount() > 0) {
+                        shoppingCartService.removeProductFromCart(idUser, shoppingCartDTO);
+                        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
+                    }
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
                 }
                 return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product"));
             }

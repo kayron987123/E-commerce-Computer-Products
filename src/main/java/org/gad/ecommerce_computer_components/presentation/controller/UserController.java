@@ -6,6 +6,8 @@ import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
 import org.gad.ecommerce_computer_components.presentation.dto.*;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
+import org.gad.ecommerce_computer_components.sevice.interfaces.CartTransferService;
+import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,15 +39,29 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private CartTransferService cartTransferService;
+
+    @Autowired
+    private ShoppingCartService shoppingCartService;
+
     @PostMapping("/login/user")
-    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody UserRequest userRequest) {
+    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody UserRequest userRequest,
+                                                      @RequestParam(required = false) String tempCartId) {
         try {
             UserDTO userDTO = userService.findByUsername(userRequest.getUsername());
             if (userDTO.getAccountStatus().name().equals(ELIMINADO.name())) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Cannot authenticate a deleted user.", null));
             }
+
             String token = userService.authenticateUser(userRequest.getUsername(), userRequest.getPassword());
+
+            if (tempCartId != null && !tempCartId.isEmpty()) {
+                Long userId = shoppingCartService.extractUserIdFromToken(token);
+                cartTransferService.transferTempCartToUserCart(tempCartId, userId);
+            }
+
             ApiResponseToken response = new ApiResponseToken(HttpStatus.OK.value(), "Successful authentication", token);
             return ResponseEntity.ok(response);
         } catch (UsernameNotFoundException e) {
@@ -53,7 +69,6 @@ public class UserController {
                     .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), e.getMessage(), null));
         }
     }
-
 
     @PostMapping("/register/user")
     public ResponseEntity<ApiResponse> registerUser(
@@ -79,8 +94,15 @@ public class UserController {
     }
 
     @PostMapping("/verifyToken/user")
-    public ResponseEntity<ApiResponseToken> verifyTokenUser(@RequestBody VerifyUserToken verifyUserToken) {
+    public ResponseEntity<ApiResponseToken> verifyTokenUser(@RequestBody VerifyUserToken verifyUserToken,
+                                                            @RequestParam(required = false) String tempCartId) {
         String token = userService.verifyUserToken(verifyUserToken);
+
+        if (tempCartId != null && !tempCartId.isEmpty()) {
+            Long userId = shoppingCartService.extractUserIdFromToken(token);
+            cartTransferService.transferTempCartToUserCart(tempCartId, userId);
+        }
+
         if (token != null) {
             return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Token verified successfully", token));
         }
@@ -164,15 +186,15 @@ public class UserController {
 
     @PutMapping("/updateStatus/user/{id}")
     public ResponseEntity<ApiResponse> updateStatusUser(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                        @PathVariable Long id){
+                                                        @PathVariable Long id) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String tokenJWT = authorizationHeader.substring(7);
                 Claims claims = userService.extractClaimsFromJWT(tokenJWT);
                 String role = claims.get("role", String.class);
-                if(role.equals(ADMINISTRADOR.name())){
+                if (role.equals(ADMINISTRADOR.name())) {
                     Optional<UserDTO> userDTOOptional = userService.findById(id);
-                    if(!userDTOOptional.isPresent()){
+                    if (!userDTOOptional.isPresent()) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                 .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
                     }
@@ -186,7 +208,7 @@ public class UserController {
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
-        }catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user status: " + e.getMessage()));
         }

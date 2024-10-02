@@ -1,12 +1,17 @@
 package org.gad.ecommerce_computer_components.sevice.impl;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import org.gad.ecommerce_computer_components.sevice.interfaces.EmailService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.io.File;
 
@@ -16,9 +21,6 @@ public class EmailServiceImpl implements EmailService {
     private final static String SUBJECT_TOKEN = "CREACION DE CUENTA EN EL E-COMMERCE";
     private final static String SUBJECT_DELETE = "ELIMINACION DE CUENTA EN EL E-COMMERCE";
     private final static String SUBJECT_UPDATE_PASSWORD = "ACTUALIZACION DE CONTRASEÑA EN EL E-COMMERCE";
-    private final static String MESSAGE_TOKEN = "SU CUENTA HA SIDO CREADA CON EXITO, SU TOKEN TEMPORAL ES : ";
-    private final static String MESSAGE_TOKEN_UPDATE = "SU CONTRASEÑA HA SIDO ACTUALIZADA CON EXITO, SU TOKEN TEMPORAL ES : ";
-    private final static String MESSAGE_DELETE = "SU CUENTA ASOCIADA A ESTE CORREO : ";
 
     @Value("${USER_EMAIL}")
     private String user;
@@ -26,36 +28,59 @@ public class EmailServiceImpl implements EmailService {
     @Autowired
     private JavaMailSender emailSender;
 
-    @Override
-    public void sendEmailTemporaryKey(String toUser, String token) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setFrom(user);
-        mailMessage.setTo(toUser);
-        mailMessage.setSubject(SUBJECT_TOKEN);
-        mailMessage.setText(MESSAGE_TOKEN.concat(token));
-
-        emailSender.send(mailMessage);
-    }
+    @Autowired
+    private TemplateEngine templateEngine;
 
     @Override
-    public void sendEmailTemporaryKeyUpdate(String toUser, String token) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setFrom(user);
-        mailMessage.setTo(toUser);
-        mailMessage.setSubject(SUBJECT_UPDATE_PASSWORD);
-        mailMessage.setText(MESSAGE_TOKEN_UPDATE.concat(token));
+    public void sendEmailWithTokenConfirmation(String toUser, String token, String emailType) {
+        Context context = new Context();
+        context.setVariable("token", token);
 
-        emailSender.send(mailMessage);
+        String emailContent = "";
+
+        MimeMessage message = emailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(user);
+            helper.setTo(toUser);
+
+            switch (emailType) {
+                case "TOKEN":
+                    templateEngine.process("email-create-user", context);
+                    helper.setSubject(SUBJECT_TOKEN);
+                    helper.setText(emailContent,true);
+                    break;
+                case "UPDATE":
+                    templateEngine.process("email-update-user", context);
+                    helper.setSubject(SUBJECT_UPDATE_PASSWORD);
+                    helper.setText(emailContent, true);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid email type");
+            }
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar el correo", e);
+        }
     }
+
 
     @Override
     public void sendEmailToDeleteUser(String toUser) {
-        SimpleMailMessage mailMessage = new SimpleMailMessage();
-        mailMessage.setFrom(user);
-        mailMessage.setTo(toUser);
-        mailMessage.setSubject(SUBJECT_DELETE);
-        mailMessage.setText(MESSAGE_DELETE.concat(toUser).concat(" HA SIDO ELIMINADA"));
+        Context context = new Context();
 
-        emailSender.send(mailMessage);
+        String emailContent = templateEngine.process("email-delete-user", context);
+
+        MimeMessage message = emailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom(user);
+            helper.setTo(toUser);
+            helper.setSubject(SUBJECT_DELETE);
+            helper.setText(emailContent, true);
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error al enviar el correo de eliminación", e);
+        }
     }
 }
