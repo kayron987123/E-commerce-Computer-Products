@@ -14,6 +14,8 @@ import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartServi
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.gad.ecommerce_computer_components.utils.mappers.ShoppingCartMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.RedisKeyExpiredEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +31,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     private RedisTemplate<String, Object> redisTemplate;
 
     private static final String CART_KEY_PREFIX = "cart:";
-    private static final int EXPIRATION_MINUTES = 60;
+    private static final int EXPIRATION_MINUTES = 1000;
 
     @Autowired
     private UserService userService;
@@ -64,6 +66,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                     existingCartItem.setAmount(newQuantity);
                     productService.updateProductStock(shoppingCartDTO.getProductId(), quantityToAdd);
                     redisTemplate.opsForList().set(key, i, existingCartItem);
+
                     productUpdated = true;
                 } else {
                     throw new IllegalArgumentException("Not enough stock available");
@@ -103,7 +106,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
-    public void removeProductFromCart(Long userId, ShoppingCartDTO shoppingCartDTO) {
+    public void removeProductFromCart(Long userId, ShoppingCartDTO shoppingCartDTO) throws IllegalArgumentException {
         String key = CART_KEY_PREFIX + userId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
 
@@ -113,14 +116,23 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         for (int i = 0; i < cartItems.size(); i++) {
             ShoppingCart existingCartItem = (ShoppingCart) cartItems.get(i);
             if (existingCartItem.getProduct().getId().equals(shoppingCartDTO.getProductId())) {
-                int newQuantity = existingCartItem.getAmount() - quantityToRemove;
+                int currentQuantity = existingCartItem.getAmount();
+
+                // Verificar si la cantidad a remover es mayor que la cantidad actual en el carrito
+                if (quantityToRemove > currentQuantity) {
+                    throw new IllegalArgumentException("Cannot remove more items than currently in cart");
+                }
+
+                int newQuantity = currentQuantity - quantityToRemove;
                 if (newQuantity > 0) {
+                    // Actualizar la cantidad en el carrito
                     existingCartItem.setAmount(newQuantity);
-                    productService.updateProductStock(shoppingCartDTO.getProductId(), quantityToRemove);
+                    productService.updateProductReturnStockRedis(shoppingCartDTO.getProductId(), quantityToRemove);
                     redisTemplate.opsForList().set(key, i, existingCartItem);
                 } else {
+                    // Eliminar el producto del carrito si la cantidad nueva es cero
                     redisTemplate.opsForList().remove(key, 1, existingCartItem);
-                    productService.updateProductStock(shoppingCartDTO.getProductId(), existingCartItem.getAmount());
+                    productService.updateProductReturnStockRedis(shoppingCartDTO.getProductId(), currentQuantity);
                 }
                 return;
             }
@@ -136,7 +148,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
         for (Object item : cartItems) {
             ShoppingCart cartItem = (ShoppingCart) item;
-            productService.updateProductStock(cartItem.getProduct().getId(), cartItem.getAmount());
+            productService.updateProductReturnStockRedis(cartItem.getProduct().getId(), cartItem.getAmount());
         }
 
         redisTemplate.delete(key);

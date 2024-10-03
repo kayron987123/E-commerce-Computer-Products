@@ -2,6 +2,7 @@ package org.gad.ecommerce_computer_components.sevice.interfaces;
 
 import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.ShoppingCartDTO;
+import org.springframework.data.redis.core.RedisKeyExpiredEvent;
 
 import java.util.List;
 
@@ -12,5 +13,4 @@ public interface ShoppingCartService {
     void clearCart(Long userId);
 
     Long extractUserIdFromToken(String authorizationHeader);
-
 }

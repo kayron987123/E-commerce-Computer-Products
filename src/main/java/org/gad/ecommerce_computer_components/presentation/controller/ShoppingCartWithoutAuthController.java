@@ -46,8 +46,11 @@ public class ShoppingCartWithoutAuthController {
         ProductStatus statusProduct = productService.getProductStatus(shoppingCartDTO.getProductId());
         if (!statusProduct.equals(ProductStatus.DESCONTINUADO) || !statusProduct.equals(ProductStatus.AGOTADO)) {
             if (shoppingCartDTO.getAmount() > 0) {
-                shoppingCartWithoutAuthService.addProductToTempCart(cartId, shoppingCartDTO);
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
+                if (shoppingCartDTO.getAmount() <= productService.getProductStock(shoppingCartDTO.getProductId())) {
+                    shoppingCartWithoutAuthService.addProductToTempCart(cartId, shoppingCartDTO);
+                    return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
+                }
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Insufficient stock"));
             }
             return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
         }
@@ -65,18 +68,22 @@ public class ShoppingCartWithoutAuthController {
 
     @DeleteMapping("/{cartId}/removeProduct/cart")
     public ResponseEntity<ApiResponse> removeProductFromCart(@PathVariable String cartId,
-                                                             @RequestBody ShoppingCartDTO shoppingCartDTO) {
-        if (cartId == null) {
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid id cart"));
+                                                             @RequestBody ShoppingCartDTO shoppingCartDTO){
+        try{
+            if (cartId == null) {
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid id cart"));
+            }
+            if (shoppingCartDTO.getProductId() == 0 || shoppingCartDTO.getProductId() < 0) {
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid id product"));
+            }
+            if (shoppingCartDTO.getAmount() > 0 ) {
+                shoppingCartWithoutAuthService.removeProductFromCart(cartId, shoppingCartDTO);
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
+            }
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
+        }catch (IllegalArgumentException e){
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
         }
-        if (shoppingCartDTO.getProductId() == 0){
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid id product"));
-        }
-        if (shoppingCartDTO.getAmount() > 0) {
-            shoppingCartWithoutAuthService.removeProductFromCart(cartId, shoppingCartDTO);
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
-        }
-        return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
     }
 
     @DeleteMapping("/{cartId}/clearTempCart/cart")

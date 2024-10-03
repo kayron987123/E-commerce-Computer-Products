@@ -47,7 +47,7 @@ public class UserController {
 
     @PostMapping("/login/user")
     public ResponseEntity<ApiResponseToken> loginUser(@RequestBody UserRequest userRequest,
-                                                      @RequestParam(required = false) String tempCartId) {
+                                                      @RequestParam String tempCartId) {
         try {
             UserDTO userDTO = userService.findByUsername(userRequest.getUsername());
             if (userDTO.getAccountStatus().name().equals(ELIMINADO.name())) {

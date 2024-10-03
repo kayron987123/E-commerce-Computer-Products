@@ -1,5 +1,6 @@
 package org.gad.ecommerce_computer_components.sevice.impl;
 
+import jakarta.transaction.Transactional;
 import org.gad.ecommerce_computer_components.persistence.entity.Product;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
@@ -16,6 +17,24 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductStatus getProductStatus(Long id) {
         return productRepository.findStatusById(id);
+    }
+
+    @Transactional
+    @Override
+    public void updateProductReturnStockRedis(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+
+        int newStock = product.getStock() + quantity;
+        product.setStock(newStock);
+        productRepository.save(product);
+    }
+
+    @Override
+    public Integer getProductStock(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        return product.getStock();
     }
 
     @Override

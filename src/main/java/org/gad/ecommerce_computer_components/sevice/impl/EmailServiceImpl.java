@@ -29,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
     private JavaMailSender emailSender;
 
     @Autowired
-    private TemplateEngine templateEngine;
+    private TemplateEngine mailTemplateEngine;
 
     @Override
     public void sendEmailWithTokenConfirmation(String toUser, String token, String emailType) {
@@ -46,12 +46,12 @@ public class EmailServiceImpl implements EmailService {
 
             switch (emailType) {
                 case "TOKEN":
-                    templateEngine.process("email-create-user", context);
+                    emailContent = mailTemplateEngine.process("email-create-user", context);
                     helper.setSubject(SUBJECT_TOKEN);
                     helper.setText(emailContent,true);
                     break;
                 case "UPDATE":
-                    templateEngine.process("email-update-user", context);
+                    emailContent = mailTemplateEngine.process("email-update-user", context);
                     helper.setSubject(SUBJECT_UPDATE_PASSWORD);
                     helper.setText(emailContent, true);
                     break;
@@ -69,7 +69,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmailToDeleteUser(String toUser) {
         Context context = new Context();
 
-        String emailContent = templateEngine.process("email-delete-user", context);
+        String emailContent = mailTemplateEngine.process("email-delete-user", context);
 
         MimeMessage message = emailSender.createMimeMessage();
         try {

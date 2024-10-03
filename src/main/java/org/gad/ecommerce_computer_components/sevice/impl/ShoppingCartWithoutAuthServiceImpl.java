@@ -11,6 +11,8 @@ import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartWithoutAuthService;
 import org.gad.ecommerce_computer_components.utils.mappers.ShoppingCartMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.redis.core.RedisKeyExpiredEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 public class ShoppingCartWithoutAuthServiceImpl implements ShoppingCartWithoutAuthService {
 
-    private static final long CART_EXPIRATION_MINUTES = 300;
+    private static final long CART_EXPIRATION_MINUTES = 1000;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -108,14 +110,14 @@ public class ShoppingCartWithoutAuthServiceImpl implements ShoppingCartWithoutAu
 
         for (Object item : cartItems) {
             ShoppingCart cartItem = (ShoppingCart) item;
-            productService.updateProductStock(cartItem.getProduct().getId(), cartItem.getAmount());
+            productService.updateProductReturnStockRedis(cartItem.getProduct().getId(), cartItem.getAmount());
         }
 
         redisTemplate.delete(key);
     }
 
     @Override
-    public void removeProductFromCart(String cartId, ShoppingCartDTO shoppingCartDTO) {
+    public void removeProductFromCart(String cartId, ShoppingCartDTO shoppingCartDTO) throws IllegalArgumentException {
         String key = "tempCart:" + cartId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
 
@@ -125,14 +127,23 @@ public class ShoppingCartWithoutAuthServiceImpl implements ShoppingCartWithoutAu
         for (int i = 0; i < cartItems.size(); i++) {
             ShoppingCart existingCartItem = (ShoppingCart) cartItems.get(i);
             if (existingCartItem.getProduct().getId().equals(shoppingCartDTO.getProductId())) {
-                int newQuantity = existingCartItem.getAmount() - quantityToRemove;
+                int currentQuantity = existingCartItem.getAmount();
+
+                // Verificar si la cantidad a remover es mayor que la cantidad actual en el carrito
+                if (quantityToRemove > currentQuantity) {
+                    throw new IllegalArgumentException("Cannot remove more items than currently in cart");
+                }
+
+                int newQuantity = currentQuantity - quantityToRemove;
                 if (newQuantity > 0) {
+                    // Actualizar la cantidad en el carrito
                     existingCartItem.setAmount(newQuantity);
-                    productService.updateProductStock(shoppingCartDTO.getProductId(), quantityToRemove);
+                    productService.updateProductReturnStockRedis(shoppingCartDTO.getProductId(), quantityToRemove);
                     redisTemplate.opsForList().set(key, i, existingCartItem);
                 } else {
+                    // Eliminar el producto del carrito si la cantidad nueva es cero
                     redisTemplate.opsForList().remove(key, 1, existingCartItem);
-                    productService.updateProductStock(shoppingCartDTO.getProductId(), existingCartItem.getAmount());
+                    productService.updateProductReturnStockRedis(shoppingCartDTO.getProductId(), currentQuantity);
                 }
                 return;
             }

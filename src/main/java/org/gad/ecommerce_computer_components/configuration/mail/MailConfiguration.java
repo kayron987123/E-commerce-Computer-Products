@@ -43,7 +43,7 @@ public class MailConfiguration {
     }
 
     @Bean
-    public TemplateEngine templateEngine(SpringResourceTemplateResolver defaultTemplateResolver){
+    public TemplateEngine mailTemplateEngine(SpringResourceTemplateResolver defaultTemplateResolver){
         SpringTemplateEngine templateEngine = new SpringTemplateEngine();
         templateEngine.setTemplateResolver(templateResolver());
         return templateEngine;
