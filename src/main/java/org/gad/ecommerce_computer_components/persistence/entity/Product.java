@@ -56,6 +56,7 @@ public class Product {
     private Model model;
 
     @Column(name = "estado")
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
     @Column(name = "imagen")

@@ -31,9 +31,7 @@ public class Constants {
     }
 
     public static void main(String[] args) {
-        String encryptedPassword = encryptPassword("123456");
+        String encryptedPassword = encryptPassword("test123456");
         System.out.println(encryptedPassword);
-        Boolean verify = verifyPassword("123456", "$2a$10$xyg0zgmCGVeY6ByEEHAqXeQCm/O2O5WE.BgwhALae/yRSERUPtk6.");
-        System.out.println(verify);
     }
 }

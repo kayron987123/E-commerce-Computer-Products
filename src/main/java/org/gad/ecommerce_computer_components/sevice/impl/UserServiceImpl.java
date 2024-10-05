@@ -7,8 +7,8 @@ import org.gad.ecommerce_computer_components.configuration.security.JWTAuthentic
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
-import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 import org.gad.ecommerce_computer_components.sevice.interfaces.EmailService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.gad.ecommerce_computer_components.utils.mappers.UserMapper;

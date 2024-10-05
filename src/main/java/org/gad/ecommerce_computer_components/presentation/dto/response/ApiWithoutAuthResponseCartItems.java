@@ -3,7 +3,7 @@ package org.gad.ecommerce_computer_components.presentation.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
 
 import java.util.List;
 

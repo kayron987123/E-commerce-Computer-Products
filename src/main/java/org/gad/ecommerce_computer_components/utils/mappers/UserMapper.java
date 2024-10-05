@@ -1,7 +1,7 @@
 package org.gad.ecommerce_computer_components.utils.mappers;
 
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
-import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

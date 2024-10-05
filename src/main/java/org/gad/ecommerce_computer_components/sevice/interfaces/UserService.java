@@ -1,10 +1,8 @@
 package org.gad.ecommerce_computer_components.sevice.interfaces;
 
 import io.jsonwebtoken.Claims;
-import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
-import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
-import org.springframework.security.core.userdetails.User;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 
 import java.util.Optional;
 

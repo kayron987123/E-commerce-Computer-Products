@@ -7,15 +7,13 @@ import org.gad.ecommerce_computer_components.persistence.entity.ShoppingCart;
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
-import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.gad.ecommerce_computer_components.utils.mappers.ShoppingCartMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.event.EventListener;
-import org.springframework.data.redis.core.RedisKeyExpiredEvent;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 

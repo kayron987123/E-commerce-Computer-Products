@@ -2,8 +2,12 @@ package org.gad.ecommerce_computer_components.presentation.controller;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import jakarta.validation.Valid;
 import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
-import org.gad.ecommerce_computer_components.presentation.dto.*;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserRecoverPassword;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserRequest;
+import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
 import org.gad.ecommerce_computer_components.sevice.interfaces.CartTransferService;
@@ -13,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,8 +27,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 
-import static org.gad.ecommerce_computer_components.persistence.enums.AccountStatement.ACTIVO;
-import static org.gad.ecommerce_computer_components.persistence.enums.AccountStatement.ELIMINADO;
 import static org.gad.ecommerce_computer_components.persistence.enums.Role.ADMINISTRADOR;
 
 @RestController
@@ -46,24 +47,24 @@ public class UserController {
     private ShoppingCartService shoppingCartService;
 
     @PostMapping("/login/user")
-    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody UserRequest userRequest,
+    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody @Valid UserRequest userRequest,
                                                       @RequestParam String tempCartId) {
         try {
             UserDTO userDTO = userService.findByUsername(userRequest.getUsername());
-            if (userDTO.getAccountStatus().name().equals(ELIMINADO.name())) {
+            if (userDTO.getAccountStatus().equals(AccountStatement.ELIMINADO)) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Cannot authenticate a deleted user.", null));
             }
 
             String token = userService.authenticateUser(userRequest.getUsername(), userRequest.getPassword());
 
+            // Transferir carrito temporal al usuario si existe tempCartId
             if (tempCartId != null && !tempCartId.isEmpty()) {
                 Long userId = shoppingCartService.extractUserIdFromToken(token);
                 cartTransferService.transferTempCartToUserCart(tempCartId, userId);
             }
 
-            ApiResponseToken response = new ApiResponseToken(HttpStatus.OK.value(), "Successful authentication", token);
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Successful authentication", token));
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), e.getMessage(), null));
@@ -72,112 +73,126 @@ public class UserController {
 
     @PostMapping("/register/user")
     public ResponseEntity<ApiResponse> registerUser(
-            @RequestPart("user") UserDTO userDTO,
+            @RequestPart("user") @Valid UserDTO userDTO,
             @RequestPart(value = "file", required = false) MultipartFile file) {
 
-        if (file != null && !file.isEmpty()) {
-            String fileName = file.getOriginalFilename();
-            if (fileName == null || !userService.isImageFile(fileName)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), INVALIDATION_MESSAGE));
-            }
-            try {
+        try {
+            if (file != null && !file.isEmpty()) {
+                String fileName = file.getOriginalFilename();
+                if (fileName == null || !userService.isImageFile(fileName)) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), INVALIDATION_MESSAGE));
+                }
                 Path path = Paths.get(FILE_PATH + fileName);
                 Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                 userDTO.setProfileImage("/images/" + fileName);
-            } catch (IOException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error"));
             }
+
+            userService.saveUserInRedis(userDTO, EMAIL_SEND_TOKEN);
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully and Token generated"));
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving file"));
         }
-        userService.saveUserInRedis(userDTO, EMAIL_SEND_TOKEN);
-        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully and Token generated"));
     }
 
     @PostMapping("/verifyToken/user")
-    public ResponseEntity<ApiResponseToken> verifyTokenUser(@RequestBody VerifyUserToken verifyUserToken,
+    public ResponseEntity<ApiResponseToken> verifyTokenUser(@RequestBody @Valid VerifyUserToken verifyUserToken,
                                                             @RequestParam(required = false) String tempCartId) {
-        String token = userService.verifyUserToken(verifyUserToken);
+        try {
+            String token = userService.verifyUserToken(verifyUserToken);
 
-        if (tempCartId != null && !tempCartId.isEmpty()) {
-            Long userId = shoppingCartService.extractUserIdFromToken(token);
-            cartTransferService.transferTempCartToUserCart(tempCartId, userId);
-        }
+            if (tempCartId != null && !tempCartId.isEmpty()) {
+                Long userId = shoppingCartService.extractUserIdFromToken(token);
+                cartTransferService.transferTempCartToUserCart(tempCartId, userId);
+            }
 
-        if (token != null) {
-            return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Token verified successfully", token));
+            if (token != null) {
+                return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Token verified successfully", token));
+            }
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Token not verified", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseToken(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponseToken(HttpStatus.UNAUTHORIZED.value(), "Token not verified", null));
     }
 
     @PostMapping("/recoverPassword/user")
-    public ResponseEntity<ApiResponse> recoverPassword(@RequestBody UserRecoverPassword userRecoverPassword) {
-        if (userRecoverPassword != null &&
-                userRecoverPassword.getFirstPassword().equals(userRecoverPassword.getSecondPassword())) {
+    public ResponseEntity<ApiResponse> recoverPassword(@RequestBody @Valid UserRecoverPassword userRecoverPassword) {
+        try {
+            if (!userRecoverPassword.getFirstPassword().equals(userRecoverPassword.getSecondPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Passwords do not match"));
+            }
 
             UserDTO userDTO = userService.findByEmail(userRecoverPassword.getEmail());
             if (userDTO != null) {
                 userDTO.setPassword(userRecoverPassword.getFirstPassword());
                 userService.saveUserInRedis(userDTO, EMAIL_UPDATE_PASSWORD);
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User found and Token generated"));
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Password updated successfully"));
             }
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Passwords do not match or invalid data"));
     }
 
     @PutMapping("/update/user")
     public ResponseEntity<ApiResponse> updateUser(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                  @RequestPart(value = "user", required = false) UserDTO userDTO,
+                                                  @RequestPart(value = "user", required = false) @Valid UserDTO userDTO,
                                                   @RequestPart(value = "file", required = false) MultipartFile file) {
         try {
             if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
                 String tokenJWT = authorizationHeader.substring(7);
                 Claims claims = userService.extractClaimsFromJWT(tokenJWT);
                 String email = claims.get("email", String.class);
-                UserDTO userFinded = userService.findByEmail(email);
+                UserDTO userFound = userService.findByEmail(email);
 
-                if (userFinded == null) {
+                if(userFound.getAccountStatus().equals(AccountStatement.ELIMINADO)){
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Cannot update a deleted user."));
+                }
+
+                if (userFound == null) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
                 }
 
-                // Actualización de la imagen, si se proporciona
+                // Actualización de la imagen si se proporciona
                 if (file != null && !file.isEmpty()) {
                     String fileName = file.getOriginalFilename();
                     if (fileName == null || !userService.isImageFile(fileName)) {
                         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                                 .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid image file"));
                     }
-                    try {
-                        Path path = Paths.get(FILE_PATH + fileName);
-                        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                        userFinded.setProfileImage("/images/" + fileName);
-                    } catch (IOException e) {
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving image"));
-                    }
+                    Path path = Paths.get(FILE_PATH + fileName);
+                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                    userFound.setProfileImage("/images/" + fileName);
                 }
 
-                // Actualización de los datos del UserDTO, si se proporciona
+                // Actualización de los datos del usuario
                 if (userDTO != null) {
-                    if (userDTO.getName() != null) userFinded.setName(userDTO.getName());
-                    if (userDTO.getLastName() != null) userFinded.setLastName(userDTO.getLastName());
-                    if (userDTO.getUsername() != null) userFinded.setUsername(userDTO.getUsername());
-                    if (userDTO.getEmail() != null) userFinded.setEmail(userDTO.getEmail());
-                    if (userDTO.getPassword() != null) userFinded.setPassword(userDTO.getPassword());
-                    if (userDTO.getAddress() != null) userFinded.setAddress(userDTO.getAddress());
-                    if (userDTO.getCellphone() != null) userFinded.setCellphone(userDTO.getCellphone());
-                    if (userDTO.getDni() != null) userFinded.setDni(userDTO.getDni());
+                    if (userDTO.getName() != null) userFound.setName(userDTO.getName());
+                    if (userDTO.getLastName() != null) userFound.setLastName(userDTO.getLastName());
+                    if (userDTO.getUsername() != null) userFound.setUsername(userDTO.getUsername());
+                    if (userDTO.getEmail() != null) userFound.setEmail(userDTO.getEmail());
+                    if (userDTO.getPassword() != null) userFound.setPassword(userDTO.getPassword());
+                    if (userDTO.getAddress() != null) userFound.setAddress(userDTO.getAddress());
+                    if (userDTO.getCellphone() != null) userFound.setCellphone(userDTO.getCellphone());
+                    if (userDTO.getDni() != null) userFound.setDni(userDTO.getDni());
                 }
 
-                // Guarda los cambios en la base de datos
-                userService.saveUser(userFinded);
+                userService.saveUser(userFound);
                 return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User updated successfully"));
             }
 
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
@@ -192,20 +207,24 @@ public class UserController {
                 String tokenJWT = authorizationHeader.substring(7);
                 Claims claims = userService.extractClaimsFromJWT(tokenJWT);
                 String role = claims.get("role", String.class);
-                if (role.equals(ADMINISTRADOR.name())) {
-                    Optional<UserDTO> userDTOOptional = userService.findById(id);
-                    if (!userDTOOptional.isPresent()) {
-                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
-                    }
-                    UserDTO currentUser = userDTOOptional.get();
-                    currentUser.setAccountStatus(ACTIVO);
-                    userService.saveUser(currentUser);
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User status updated successfully"));
+
+                if (!role.equals(ADMINISTRADOR.name())) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Action invalid due to its role"));
                 }
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Action invalid due to its role"));
+
+                Optional<UserDTO> userDTOOptional = userService.findById(id);
+                if (!userDTOOptional.isPresent()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+                }
+
+                UserDTO currentUser = userDTOOptional.get();
+                currentUser.setAccountStatus(AccountStatement.ACTIVO);
+                userService.saveUser(currentUser);
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User status updated successfully"));
             }
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         } catch (Exception e) {
@@ -222,21 +241,23 @@ public class UserController {
                 Claims claims = userService.extractClaimsFromJWT(tokenJWT);
                 String email = claims.get("email", String.class);
 
-                // Verificar que el email no sea nulo
                 if (email == null) {
-                    return ResponseEntity.badRequest().body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Email not found in token"));
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Email not found in token"));
                 }
 
-                // Lógica para eliminar al usuario
                 userService.deleteUser(email);
                 return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User deleted successfully"));
             }
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
         } catch (ExpiredJwtException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Token has expired"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Token has expired"));
         } catch (Exception e) {
-            // Manejo de excepciones
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error deleting user: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error deleting user: " + e.getMessage()));
         }
     }
 }

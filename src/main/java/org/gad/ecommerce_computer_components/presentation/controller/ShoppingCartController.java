@@ -1,22 +1,19 @@
 package org.gad.ecommerce_computer_components.presentation.controller;
 
+import jakarta.validation.Valid;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
-import org.gad.ecommerce_computer_components.presentation.dto.ListShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseShoppingCart;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.gad.ecommerce_computer_components.persistence.enums.ProductStatus.*;
 
 @RestController
 @RequestMapping("/shopping-carts")
@@ -30,32 +27,30 @@ public class ShoppingCartController {
 
     @PostMapping("/addProduct/cart")
     public ResponseEntity<ApiResponse> addProdductToCart(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                         @RequestBody ShoppingCartDTO shoppingCartDTO) {
+                                                         @RequestBody @Valid ShoppingCartDTO shoppingCartDTO) {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
-            if (idUser != null) {
-                ProductStatus status = productService.getProductStatus(shoppingCartDTO.getProductId());
-                if (shoppingCartDTO.getProductId() == 0 || shoppingCartDTO.getProductId() == null) {
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product"));
-                }
-                if (shoppingCartDTO == null) {
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid shopping cart"));
-                }
-                if (!status.equals(DESCONTINUADO.name()) || !status.equals(AGOTADO.name())) {
-                    if(shoppingCartDTO.getAmount() > 0) {
-                        if (shoppingCartDTO.getAmount() <= productService.getProductStock(shoppingCartDTO.getProductId())) {
-                            shoppingCartService.addProductToCart(idUser, shoppingCartDTO);
-                            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
-                        }
-                        return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Insufficient stock"));
-                    }
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
-                }
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product status"));
+            if (idUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid token"));
             }
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid token"));
+
+            ProductStatus status = productService.getProductStatus(shoppingCartDTO.getProductId());
+            if (status.equals(ProductStatus.DESCONTINUADO) || status.equals(ProductStatus.AGOTADO)) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product status"));
+            }
+
+            if (shoppingCartDTO.getAmount() > productService.getProductStock(shoppingCartDTO.getProductId())) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Insufficient stock"));
+            }
+
+            shoppingCartService.addProductToCart(idUser, shoppingCartDTO);
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product added to cart successfully"));
         } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
 
@@ -63,39 +58,37 @@ public class ShoppingCartController {
     public ResponseEntity<ApiResponseShoppingCart> getCart(@RequestHeader(value = "Authorization") String authorizationHeader) {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
-            if (idUser != null) {
-                List<ListShoppingCartDTO> carItems = shoppingCartService.getCart(idUser);
-                return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.OK.value(), "Shopping cart retrieved successfully", carItems));
+            if (idUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseShoppingCart(HttpStatus.UNAUTHORIZED.value(), "Invalid token", null));
             }
-            return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.BAD_REQUEST.value(), "Invalid token", null));
+
+            List<ListShoppingCartDTO> cartItems = shoppingCartService.getCart(idUser);
+            return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.OK.value(), "Shopping cart retrieved successfully", cartItems));
         } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponseShoppingCart(HttpStatus.BAD_REQUEST.value(), e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseShoppingCart(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage(), null));
         }
     }
 
     @DeleteMapping("/removeProduct/cart")
     public ResponseEntity<ApiResponse> removeCart(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                  @RequestBody ShoppingCartDTO shoppingCartDTO) {
+                                                  @RequestBody @Valid ShoppingCartDTO shoppingCartDTO) {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
-            if (shoppingCartDTO == null) {
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid shopping cart"));
+            if (idUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid token"));
             }
-            if (idUser != null) {
-                if (shoppingCartDTO.getProductId() != 0 || shoppingCartDTO.getProductId() > 0) {
-                    if (shoppingCartDTO.getAmount() > 0) {
-                        shoppingCartService.removeProductFromCart(idUser, shoppingCartDTO);
-                        return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
-                    }
-                    return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid amount"));
-                }
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid product"));
-            }
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid token"));
+
+            shoppingCartService.removeProductFromCart(idUser, shoppingCartDTO);
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Product removed from cart successfully"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
-        }catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
 
@@ -103,14 +96,16 @@ public class ShoppingCartController {
     public ResponseEntity<ApiResponse> clearCart(@RequestHeader(value = "Authorization") String authorizationHeader) {
         try {
             Long idUser = shoppingCartService.extractUserIdFromToken(authorizationHeader);
-            if (idUser != null) {
-                shoppingCartService.clearCart(idUser);
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Shopping cart cleared successfully"));
+            if (idUser == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Invalid token"));
             }
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid token"));
+
+            shoppingCartService.clearCart(idUser);
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Shopping cart cleared successfully"));
         } catch (Exception e) {
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), e.getMessage()));
         }
     }
-
 }
