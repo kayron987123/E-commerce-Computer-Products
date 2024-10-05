@@ -1,4 +1,4 @@
-package org.gad.ecommerce_computer_components.presentation.dto;
+package org.gad.ecommerce_computer_components.presentation.dto.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

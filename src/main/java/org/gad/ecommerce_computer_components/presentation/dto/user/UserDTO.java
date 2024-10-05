@@ -1,7 +1,6 @@
-package org.gad.ecommerce_computer_components.presentation.dto;
+package org.gad.ecommerce_computer_components.presentation.dto.user;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;

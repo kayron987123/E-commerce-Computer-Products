@@ -1,6 +1,4 @@
-package org.gad.ecommerce_computer_components.sevice.interfaces;
-
-import java.io.File;
+package org.gad.ecommerce_computer_components.service.interfaces;
 
 public interface EmailService {
     void sendEmailTemporaryKey(String toUser, String token);

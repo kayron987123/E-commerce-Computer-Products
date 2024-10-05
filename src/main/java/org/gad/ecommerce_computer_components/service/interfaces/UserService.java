@@ -1,9 +1,8 @@
-package org.gad.ecommerce_computer_components.sevice.interfaces;
+package org.gad.ecommerce_computer_components.service.interfaces;
 
 import io.jsonwebtoken.Claims;
-import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
-import org.gad.ecommerce_computer_components.presentation.dto.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.VerifyUserToken;
+import org.gad.ecommerce_computer_components.presentation.dto.user.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.user.VerifyUserToken;
 
 public interface UserService {
     UserDTO findByUsername(String username);

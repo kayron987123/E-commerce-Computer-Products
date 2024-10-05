@@ -2,10 +2,13 @@ package org.gad.ecommerce_computer_components.presentation.controller;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import org.gad.ecommerce_computer_components.presentation.dto.*;
+import org.gad.ecommerce_computer_components.presentation.dto.user.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.user.UserRecoverPassword;
+import org.gad.ecommerce_computer_components.presentation.dto.user.UserRequest;
+import org.gad.ecommerce_computer_components.presentation.dto.user.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
-import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
+import org.gad.ecommerce_computer_components.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
