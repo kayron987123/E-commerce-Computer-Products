@@ -7,7 +7,7 @@ import lombok.*;
 @AllArgsConstructor
 @Getter
 @Setter
-public class ProductResponse {
+public class ApiResponseProduct {
     private boolean success;
     private String message;
     private Object data;

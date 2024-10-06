@@ -23,6 +23,7 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.gad.ecommerce_computer_components.configuration.security.Constants.*;
 
@@ -49,14 +50,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO findByUsername(String username) {
         UserEntity user = userRepository.findByUsername(username);
-        if(user == null) {
+        if (user == null) {
             throw new UsernameNotFoundException(USER_NOT_FOUND);
         }
         return UserMapper.INSTANCE.userEntityToUserDTO(user);
     }
 
     @Override
-    public String authenticateUser(String username, String password){
+    public String authenticateUser(String username, String password) {
         UserEntity userResult = userRepository.findByUsername(username);
         if (userResult == null) {
             throw new UsernameNotFoundException(USER_NOT_FOUND);
@@ -70,17 +71,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public void saveUserInRedis(UserDTO userDTO, String emailKey) {
         String token = generateToken();
-
-        if(emailKey.equals("TOKEN")){
-            emailService.sendEmailTemporaryKey(userDTO.getEmail(), token);
-        } else if (emailKey.equals("UPDATE")){
-            emailService.sendEmailTemporaryKeyUpdate(userDTO.getEmail(), token);
-        }else {
-            throw new RuntimeException("Invalid email key");
-        }
-
+        emailService.sendEmailWithTokenConfirmation(userDTO.getEmail(), token, emailKey);
         ValueOperations<String, Object> ops = redisTemplate.opsForValue();
-        ops.set(token, userDTO, Duration.ofMinutes(1));
+        ops.set(token, userDTO, Duration.ofMinutes(5));
     }
 
     @Override
@@ -114,7 +107,9 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserDTO saveUser(UserDTO userDTO) {
         UserEntity userEntity = UserMapper.INSTANCE.userDTOToUserEntity(userDTO);
-        userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+        if (userEntity.getPassword() != null && !userEntity.getPassword().startsWith("$2a$")) {
+            userEntity.setPassword(new BCryptPasswordEncoder().encode(userEntity.getPassword()));
+        }
         UserEntity savedUser = this.userRepository.save(userEntity);
         return UserMapper.INSTANCE.userEntityToUserDTO(savedUser);
     }
@@ -172,7 +167,7 @@ public class UserServiceImpl implements UserService {
     public UserDTO deleteUser(String email) {
         UserDTO userDTO = findByEmail(email);
 
-        if(userDTO == null) {
+        if (userDTO == null) {
             throw new RuntimeException("Usuario no fue encontrado");
         }
 
@@ -180,5 +175,14 @@ public class UserServiceImpl implements UserService {
         emailService.sendEmailToDeleteUser(userDTO.getEmail());
         userRepository.save(UserMapper.INSTANCE.userDTOToUserEntity(userDTO));
         return userDTO;
+    }
+
+    @Override
+    public Optional<UserDTO> findById(Long id) {
+        Optional<UserEntity> userOptional = userRepository.findById(id);
+        if (userOptional.isPresent()) {
+            return Optional.of(UserMapper.INSTANCE.userEntityToUserDTO(userOptional.get()));
+        }
+        return Optional.empty();
     }
 }

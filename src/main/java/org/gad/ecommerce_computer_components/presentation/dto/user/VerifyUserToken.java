@@ -1,5 +1,7 @@
 package org.gad.ecommerce_computer_components.presentation.dto.user;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,5 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class VerifyUserToken {
+    @NotNull(message = "Token cannot be null")
+    @NotBlank(message = "Token cannot be blank")
     private String token;
 }

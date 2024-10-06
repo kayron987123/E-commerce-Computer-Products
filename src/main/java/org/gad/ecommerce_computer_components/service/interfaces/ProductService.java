@@ -1,5 +1,6 @@
 package org.gad.ecommerce_computer_components.service.interfaces;
 
+import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
 import org.gad.ecommerce_computer_components.presentation.dto.product.ProductDTO;
 
 import java.util.List;
@@ -12,4 +13,8 @@ public interface ProductService {
     ProductDTO deleteProduct(long id);
     ProductDTO updateProduct(ProductDTO productDTO);
     boolean ifImageIsValid(String fileName);
+    ProductStatus getProductStatus(Long id);
+    void updateProductStock(Long productId, int quantity);
+    void updateProductReturnStockRedis(Long productId, int quantity);
+    Integer getProductStock(Long productId);
 }

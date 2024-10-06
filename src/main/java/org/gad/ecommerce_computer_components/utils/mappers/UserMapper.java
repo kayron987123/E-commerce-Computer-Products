@@ -18,6 +18,4 @@ public interface UserMapper {
     @Mapping(target = "accountStatus", source = "accountStatus", defaultValue = "ACTIVO")
     @Mapping(target = "profileImage", defaultValue = "default.jpg")
     UserEntity userDTOToUserEntity(UserDTO userDTO);
-
-
 }
