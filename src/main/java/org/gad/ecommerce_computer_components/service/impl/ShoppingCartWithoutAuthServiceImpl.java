@@ -1,17 +1,13 @@
-package org.gad.ecommerce_computer_components.sevice.impl;
+package org.gad.ecommerce_computer_components.service.impl;
 
-import io.jsonwebtoken.Claims;
 import jakarta.transaction.Transactional;
 import org.gad.ecommerce_computer_components.persistence.entity.Product;
 import org.gad.ecommerce_computer_components.persistence.entity.ShoppingCart;
-import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
-import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
+import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartWithoutAuthService;
 import org.gad.ecommerce_computer_components.utils.mappers.ShoppingCartMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -19,31 +15,36 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
-public class ShoppingCartServiceImpl implements ShoppingCartService {
+public class ShoppingCartWithoutAuthServiceImpl implements ShoppingCartWithoutAuthService {
+
+    private static final long CART_EXPIRATION_MINUTES = 1000;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
-    private static final String CART_KEY_PREFIX = "cart:";
-    private static final int EXPIRATION_MINUTES = 1000;
-
-    @Autowired
-    private UserService userService;
     @Autowired
     private ProductRepository productRepository;
+
     @Autowired
     private ProductService productService;
-    @Autowired
-    private UserRepository userRepository;
+
+    @Override
+    public String createTempCart() {
+        String cartId = UUID.randomUUID().toString();
+        String key = "tempCart:" + cartId;
+        redisTemplate.expire(key, CART_EXPIRATION_MINUTES, TimeUnit.MINUTES);
+        return cartId;
+    }
 
     @Transactional
     @Override
-    public void addProductToCart(Long userId, ShoppingCartDTO shoppingCartDTO) {
-        String key = CART_KEY_PREFIX + userId;
+    public void addProductToTempCart(String cartId, ShoppingCartDTO shoppingCartDTO) {
+        String key = "tempCart:" + cartId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
 
         int quantityToAdd = (shoppingCartDTO.getAmount() != null && shoppingCartDTO.getAmount() > 0)
@@ -64,7 +65,6 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                     existingCartItem.setAmount(newQuantity);
                     productService.updateProductStock(shoppingCartDTO.getProductId(), quantityToAdd);
                     redisTemplate.opsForList().set(key, i, existingCartItem);
-
                     productUpdated = true;
                 } else {
                     throw new IllegalArgumentException("Not enough stock available");
@@ -77,11 +77,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             ShoppingCart newCartItem = new ShoppingCart();
             newCartItem.setProduct(product);
             newCartItem.setAmount(quantityToAdd);
-            Optional<UserEntity> userEntity = userRepository.findById(userId);
-            if (!userEntity.isPresent()) {
-                throw new IllegalArgumentException("User not found");
-            }
-            newCartItem.setUser(userEntity.get());
+            newCartItem.setUser(null);
 
             if (quantityToAdd <= product.getStock()) {
                 productService.updateProductStock(shoppingCartDTO.getProductId(), quantityToAdd);
@@ -91,12 +87,12 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             }
         }
 
-        redisTemplate.expire(key, EXPIRATION_MINUTES, TimeUnit.MINUTES);
+        redisTemplate.expire(key, CART_EXPIRATION_MINUTES, TimeUnit.MINUTES);
     }
 
     @Override
-    public List<ListShoppingCartDTO> getCart(Long userId) {
-        String key = CART_KEY_PREFIX + userId;
+    public List<ListShoppingCartDTO> getTempCartItems(String cartId) {
+        String key = "tempCart:" + cartId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
         return cartItems.stream()
                 .map(item -> ShoppingCartMapper.INSTANCE.toListDTO((ShoppingCart) item))
@@ -104,8 +100,21 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     }
 
     @Override
-    public void removeProductFromCart(Long userId, ShoppingCartDTO shoppingCartDTO) throws IllegalArgumentException {
-        String key = CART_KEY_PREFIX + userId;
+    public void clearTempCart(String cartId) {
+        String key = "tempCart:" + cartId;
+        List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
+
+        for (Object item : cartItems) {
+            ShoppingCart cartItem = (ShoppingCart) item;
+            productService.updateProductReturnStockRedis(cartItem.getProduct().getId(), cartItem.getAmount());
+        }
+
+        redisTemplate.delete(key);
+    }
+
+    @Override
+    public void removeProductFromCart(String cartId, ShoppingCartDTO shoppingCartDTO) throws IllegalArgumentException {
+        String key = "tempCart:" + cartId;
         List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
 
         int quantityToRemove = (shoppingCartDTO.getAmount() != null && shoppingCartDTO.getAmount() > 0)
@@ -137,28 +146,5 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
 
         throw new IllegalArgumentException("Product not found in cart");
-    }
-
-    @Override
-    public void clearCart(Long userId) {
-        String key = CART_KEY_PREFIX + userId;
-        List<Object> cartItems = redisTemplate.opsForList().range(key, 0, -1);
-
-        for (Object item : cartItems) {
-            ShoppingCart cartItem = (ShoppingCart) item;
-            productService.updateProductReturnStockRedis(cartItem.getProduct().getId(), cartItem.getAmount());
-        }
-
-        redisTemplate.delete(key);
-    }
-
-    @Override
-    public Long extractUserIdFromToken(String authorizationHeader) {
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            String tokenJWT = authorizationHeader.substring(7);
-            Claims claims = userService.extractClaimsFromJWT(tokenJWT);
-            return claims.get("id", Long.class);
-        }
-        throw new IllegalArgumentException("Invalid token");
     }
 }

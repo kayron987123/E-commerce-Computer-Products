@@ -7,8 +7,8 @@ import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCa
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiWithoutAuthResponseCartItems;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiWithoutAuthResponseUUID;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartWithoutAuthService;
+import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartWithoutAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

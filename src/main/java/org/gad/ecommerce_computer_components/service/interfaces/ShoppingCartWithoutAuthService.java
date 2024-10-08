@@ -1,4 +1,4 @@
-package org.gad.ecommerce_computer_components.sevice.interfaces;
+package org.gad.ecommerce_computer_components.service.interfaces;
 
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;

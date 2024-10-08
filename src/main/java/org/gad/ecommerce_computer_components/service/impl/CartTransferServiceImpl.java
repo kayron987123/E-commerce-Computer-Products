@@ -1,10 +1,10 @@
-package org.gad.ecommerce_computer_components.sevice.impl;
+package org.gad.ecommerce_computer_components.service.impl;
 
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
-import org.gad.ecommerce_computer_components.sevice.interfaces.CartTransferService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartWithoutAuthService;
+import org.gad.ecommerce_computer_components.service.interfaces.CartTransferService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartWithoutAuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,19 +1,15 @@
-package org.gad.ecommerce_computer_components.sevice.impl;
+package org.gad.ecommerce_computer_components.service.impl;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.gad.ecommerce_computer_components.sevice.interfaces.EmailService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
+import org.gad.ecommerce_computer_components.service.interfaces.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
-
-import java.io.File;
 
 @Service
 public class EmailServiceImpl implements EmailService {

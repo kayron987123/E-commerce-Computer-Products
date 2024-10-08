@@ -6,8 +6,8 @@ import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShop
 import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseShoppingCart;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
+import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

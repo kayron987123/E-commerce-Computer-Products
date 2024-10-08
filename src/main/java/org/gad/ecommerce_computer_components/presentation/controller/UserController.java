@@ -10,9 +10,9 @@ import org.gad.ecommerce_computer_components.presentation.dto.request.UserReques
 import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
-import org.gad.ecommerce_computer_components.sevice.interfaces.CartTransferService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ShoppingCartService;
-import org.gad.ecommerce_computer_components.sevice.interfaces.UserService;
+import org.gad.ecommerce_computer_components.service.interfaces.CartTransferService;
+import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
+import org.gad.ecommerce_computer_components.service.interfaces.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,10 +1,10 @@
-package org.gad.ecommerce_computer_components.sevice.impl;
+package org.gad.ecommerce_computer_components.service.impl;
 
 import jakarta.transaction.Transactional;
 import org.gad.ecommerce_computer_components.persistence.entity.Product;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
-import org.gad.ecommerce_computer_components.sevice.interfaces.ProductService;
+import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package org.gad.ecommerce_computer_components.sevice.interfaces;
+package org.gad.ecommerce_computer_components.service.interfaces;
 
 import io.jsonwebtoken.Claims;
 import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;

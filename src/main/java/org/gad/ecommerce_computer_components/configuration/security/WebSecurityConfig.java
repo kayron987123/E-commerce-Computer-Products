@@ -43,6 +43,14 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/noauth/shopping-carts/{cartId}/getTempCartItems/cart").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/noauth/shopping-carts/{cartId}/removeProduct/cart").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/noauth/shopping-carts/{cartId}/clearTempCart/cart").permitAll()
+
+                        //ForOders
+                        .requestMatchers(HttpMethod.POST, "/order/createOrder").hasRole(USUARIO.name())
+
+                        //ForPaypal
+                        .requestMatchers(HttpMethod.GET, "/paypal/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/paypal/success").permitAll()
+
                         .anyRequest().authenticated()
 
                 ))
