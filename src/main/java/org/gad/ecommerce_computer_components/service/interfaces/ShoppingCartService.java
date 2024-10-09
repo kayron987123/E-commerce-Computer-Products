@@ -1,7 +1,7 @@
 package org.gad.ecommerce_computer_components.service.interfaces;
 
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 
 import java.util.List;
 

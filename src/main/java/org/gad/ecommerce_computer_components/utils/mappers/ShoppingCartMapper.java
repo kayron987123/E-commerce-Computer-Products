@@ -6,7 +6,7 @@ import org.gad.ecommerce_computer_components.persistence.entity.ShoppingCart;
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ProductShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.UserShoppingCartDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

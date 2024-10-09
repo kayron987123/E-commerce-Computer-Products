@@ -3,7 +3,7 @@ package org.gad.ecommerce_computer_components.presentation.controller;
 import jakarta.validation.Valid;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseShoppingCart;
 import org.gad.ecommerce_computer_components.service.interfaces.ProductService;

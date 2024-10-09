@@ -1,7 +1,7 @@
 package org.gad.ecommerce_computer_components.service.impl;
 
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ListShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.ShoppingCartDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ShoppingCartDTO;
 import org.gad.ecommerce_computer_components.service.interfaces.CartTransferService;
 import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
 import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartWithoutAuthService;

@@ -1,4 +1,4 @@
-package org.gad.ecommerce_computer_components.sevice.impl;
+package org.gad.ecommerce_computer_components.service.impl;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
@@ -7,8 +7,8 @@ import org.gad.ecommerce_computer_components.configuration.security.JWTAuthentic
 import org.gad.ecommerce_computer_components.persistence.entity.UserEntity;
 import org.gad.ecommerce_computer_components.persistence.enums.AccountStatement;
 import org.gad.ecommerce_computer_components.persistence.repository.UserRepository;
-import org.gad.ecommerce_computer_components.presentation.dto.user.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.VerifyUserToken;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 import org.gad.ecommerce_computer_components.service.interfaces.EmailService;
 import org.gad.ecommerce_computer_components.service.interfaces.UserService;
 import org.gad.ecommerce_computer_components.utils.mappers.UserMapper;

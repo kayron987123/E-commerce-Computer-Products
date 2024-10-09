@@ -1,8 +1,8 @@
 package org.gad.ecommerce_computer_components.service.interfaces;
 
 import io.jsonwebtoken.Claims;
-import org.gad.ecommerce_computer_components.presentation.dto.user.UserDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.user.VerifyUserToken;
+import org.gad.ecommerce_computer_components.presentation.dto.request.UserDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 
 import java.util.Optional;
 
