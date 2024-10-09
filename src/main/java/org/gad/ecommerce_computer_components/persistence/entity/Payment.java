@@ -26,6 +26,7 @@ public class Payment {
     private Order order;
 
     @Column(name = "metodo_pago")
+    @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
     @Column(name = "monto")

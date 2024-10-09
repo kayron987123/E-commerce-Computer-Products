@@ -71,6 +71,7 @@ public class UserController {
         }
     }
 
+
     @PostMapping("/register/user")
     public ResponseEntity<ApiResponse> registerUser(
             @RequestPart("user") @Valid UserDTO userDTO,
@@ -153,7 +154,7 @@ public class UserController {
                 String email = claims.get("email", String.class);
                 UserDTO userFound = userService.findByEmail(email);
 
-                if(userFound.getAccountStatus().equals(AccountStatement.ELIMINADO)){
+                if (userFound.getAccountStatus().equals(AccountStatement.ELIMINADO)) {
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                             .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Cannot update a deleted user."));
                 }

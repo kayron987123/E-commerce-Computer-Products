@@ -1,4 +1,4 @@
-package org.gad.ecommerce_computer_components.service.impl;
+package org.gad.ecommerce_computer_components.sevice.impl;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;

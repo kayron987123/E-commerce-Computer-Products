@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -55,6 +56,7 @@ public class Product {
     private Model model;
 
     @Column(name = "estado")
+    @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
     @Column(name = "imagen")
@@ -68,4 +70,19 @@ public class Product {
 
     @Column(name = "compatibilidad")
     private String compatibility;
+
+    @Column(name = "fecha_expiracion")
+    private LocalDate expirationDate;
+
+    @Column(name = "prescripcion_medica")
+    private Boolean prescriptionMedicine;
+
+    @Column(name = "contraindicaciones")
+    private String contraindications;
+
+    @Column(name = "lote")
+    private String batch;
+
+    @Column(name = "ingredientes")
+    private String ingredients;
 }
