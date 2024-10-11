@@ -2,6 +2,10 @@ package org.gad.ecommerce_computer_components.service.impl;
 
 import com.paypal.api.payments.Links;
 import com.paypal.base.rest.PayPalRESTException;
+import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.util.JRLoader;
 import org.gad.ecommerce_computer_components.persistence.entity.*;
 import org.gad.ecommerce_computer_components.persistence.enums.OrderStatus;
 import org.gad.ecommerce_computer_components.persistence.enums.PaymentMethod;
@@ -15,12 +19,20 @@ import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
 import org.gad.ecommerce_computer_components.utils.mappers.OrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
+import java.io.*;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
+@Slf4j
 @Service
 public class OrderServiceImpl implements OrderService {
 
@@ -121,4 +133,5 @@ public class OrderServiceImpl implements OrderService {
                 .map(Links::getHref)
                 .orElseThrow(() -> new IllegalArgumentException("No PayPal approval link found"));
     }
+
 }

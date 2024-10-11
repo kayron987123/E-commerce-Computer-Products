@@ -1,6 +1,6 @@
 package org.gad.ecommerce_computer_components.presentation.controller;
 
-import org.gad.ecommerce_computer_components.presentation.dto.product.ProductDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ProductDTO;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseProduct;
 import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;

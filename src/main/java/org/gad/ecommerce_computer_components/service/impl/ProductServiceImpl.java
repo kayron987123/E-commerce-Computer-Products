@@ -4,7 +4,7 @@ import jakarta.transaction.Transactional;
 import org.gad.ecommerce_computer_components.persistence.entity.Product;
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
 import org.gad.ecommerce_computer_components.persistence.repository.ProductRepository;
-import org.gad.ecommerce_computer_components.presentation.dto.product.ProductDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ProductDTO;
 import org.gad.ecommerce_computer_components.service.interfaces.ProductService;
 import org.gad.ecommerce_computer_components.utils.mappers.ProductMapper;
 import org.springframework.beans.factory.annotation.Autowired;

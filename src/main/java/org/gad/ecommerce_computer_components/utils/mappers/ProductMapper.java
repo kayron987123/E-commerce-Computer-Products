@@ -3,7 +3,7 @@ package org.gad.ecommerce_computer_components.utils.mappers;
 import org.gad.ecommerce_computer_components.persistence.entity.Model;
 import org.gad.ecommerce_computer_components.persistence.entity.Product;
 import org.gad.ecommerce_computer_components.presentation.dto.DtoReturn.ProductShoppingCartDTO;
-import org.gad.ecommerce_computer_components.presentation.dto.product.ProductDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ProductDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;

@@ -70,6 +70,7 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
                 Claims claims = setSigningKey(request);
                 String username = claims.getSubject();
                 UserEntity user = userRepository.findByUsername(username);
+
                 if (user != null) {
                     setAuthentication(claims, user);
                 } else {

@@ -261,4 +261,5 @@ public class UserController {
                     .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error deleting user: " + e.getMessage()));
         }
     }
+
 }

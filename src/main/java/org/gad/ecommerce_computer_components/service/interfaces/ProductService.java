@@ -1,7 +1,7 @@
 package org.gad.ecommerce_computer_components.service.interfaces;
 
 import org.gad.ecommerce_computer_components.persistence.enums.ProductStatus;
-import org.gad.ecommerce_computer_components.presentation.dto.product.ProductDTO;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ProductDTO;
 
 import java.util.List;
 

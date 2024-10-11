@@ -30,6 +30,7 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/users/delete/user").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.PUT, "/users/update/").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.PUT, "/users/updateStatus/user/{id}").hasRole(ADMINISTRADOR.name())
+                        .requestMatchers(HttpMethod.POST, "/users/logout/user").hasRole(USUARIO.name())
 
                         //ForShoppingCart
                         .requestMatchers(HttpMethod.POST, "/shopping-carts/addProduct/cart").hasRole(USUARIO.name())
@@ -46,6 +47,12 @@ public class WebSecurityConfig {
 
                         //ForOders
                         .requestMatchers(HttpMethod.POST, "/order/createOrder").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.GET, "/order/createReport").hasRole(USUARIO.name())
+
+                        //ForReviews
+                        .requestMatchers(HttpMethod.POST, "/reviews/create/review/{productId}/product").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.DELETE, "/reviews/delete/review/{reviewId}").hasRole(USUARIO.name())
+                        .requestMatchers(HttpMethod.PUT, "/reviews/update/review/{reviewId}").hasRole(USUARIO.name())
 
                         //ForPaypal
                         .requestMatchers(HttpMethod.GET, "/paypal/cancel").permitAll()

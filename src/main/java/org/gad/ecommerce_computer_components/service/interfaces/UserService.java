@@ -22,4 +22,5 @@ public interface UserService {
     Claims extractClaimsFromJWT(String tokenJWT);
     UserDTO deleteUser(String email);
     Optional<UserDTO> findById(Long id);
+
 }

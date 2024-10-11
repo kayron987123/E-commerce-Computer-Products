@@ -25,16 +25,14 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "producto_id")
-    private Product account;
+    private Product product;
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
     private UserEntity user;
 
     @Column(name = "calificacion")
-    @DecimalMax(value = "5.0")
-    @DecimalMin(value = "0.0")
-    private BigDecimal qualification;
+    private Integer qualification;
 
     @Column(name = "comentario")
     private String comment;
