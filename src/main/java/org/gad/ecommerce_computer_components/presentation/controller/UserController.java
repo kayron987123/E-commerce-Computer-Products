@@ -10,6 +10,7 @@ import org.gad.ecommerce_computer_components.presentation.dto.request.UserReques
 import org.gad.ecommerce_computer_components.presentation.dto.request.VerifyUserToken;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponse;
 import org.gad.ecommerce_computer_components.presentation.dto.response.ApiResponseToken;
+import org.gad.ecommerce_computer_components.service.interfaces.AzureBlobService;
 import org.gad.ecommerce_computer_components.service.interfaces.CartTransferService;
 import org.gad.ecommerce_computer_components.service.interfaces.ShoppingCartService;
 import org.gad.ecommerce_computer_components.service.interfaces.UserService;
@@ -46,6 +47,9 @@ public class UserController {
     @Autowired
     private ShoppingCartService shoppingCartService;
 
+    @Autowired
+    private AzureBlobService azureBlobService;
+
     @PostMapping("/login/user")
     public ResponseEntity<ApiResponseToken> loginUser(@RequestBody @Valid UserRequest userRequest,
                                                       @RequestParam String tempCartId) {
@@ -79,21 +83,23 @@ public class UserController {
 
         try {
             if (file != null && !file.isEmpty()) {
-                String fileName = file.getOriginalFilename();
-                if (fileName == null || !userService.isImageFile(fileName)) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                            .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), INVALIDATION_MESSAGE));
+                try {
+                    String fileUrl = azureBlobService.uploadFile(file);
+                    userDTO.setProfileImage(fileUrl);
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest()
+                            .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
                 }
-                Path path = Paths.get(FILE_PATH + fileName);
-                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                userDTO.setProfileImage("/images/" + fileName);
             }
 
             userService.saveUserInRedis(userDTO, EMAIL_SEND_TOKEN);
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User registered successfully and Token generated"));
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Usuario registrado con éxito y Token generado"));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error saving file"));
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al subir archivo: " + e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al registrar usuario: " + e.getMessage()));
         }
     }
 
