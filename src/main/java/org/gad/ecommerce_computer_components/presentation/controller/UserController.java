@@ -93,13 +93,69 @@ public class UserController {
             }
 
             userService.saveUserInRedis(userDTO, EMAIL_SEND_TOKEN);
-            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "Usuario registrado con éxito y Token generado"));
+            return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User successfully registered and Token generated"));
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al subir archivo: " + e.getMessage()));
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error uploading file: " + e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error al registrar usuario: " + e.getMessage()));
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error registering user: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/update/user")
+    public ResponseEntity<ApiResponse> updateUser(@RequestHeader(value = "Authorization") String authorizationHeader,
+                                                  @RequestPart(value = "user", required = false) @Valid UserDTO userDTO,
+                                                  @RequestPart(value = "file", required = false) MultipartFile file) {
+        try {
+            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+                String tokenJWT = authorizationHeader.substring(7);
+                Claims claims = userService.extractClaimsFromJWT(tokenJWT);
+                String email = claims.get("email", String.class);
+                UserDTO userFound = userService.findByEmail(email);
+
+                if (userFound.getAccountStatus().equals(AccountStatement.ELIMINADO)) {
+                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                            .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Cannot update a deleted user."));
+                }
+
+                if (userFound == null) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                            .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
+                }
+
+                // Actualización de la imagen si se proporciona
+                if (file != null && !file.isEmpty()) {
+                    try {
+                        String fileUrl = azureBlobService.uploadFile(file);
+                        userFound.setProfileImage(fileUrl);
+                    } catch (IllegalArgumentException e) {
+                        return ResponseEntity.badRequest()
+                                .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid image file: " + e.getMessage()));
+                    }
+                }
+
+                // Actualización de los datos del usuario
+                if (userDTO != null) {
+                    if (userDTO.getName() != null) userFound.setName(userDTO.getName());
+                    if (userDTO.getLastName() != null) userFound.setLastName(userDTO.getLastName());
+                    if (userDTO.getUsername() != null) userFound.setUsername(userDTO.getUsername());
+                    if (userDTO.getEmail() != null) userFound.setEmail(userDTO.getEmail());
+                    if (userDTO.getPassword() != null) userFound.setPassword(userDTO.getPassword());
+                    if (userDTO.getAddress() != null) userFound.setAddress(userDTO.getAddress());
+                    if (userDTO.getCellphone() != null) userFound.setCellphone(userDTO.getCellphone());
+                    if (userDTO.getDni() != null) userFound.setDni(userDTO.getDni());
+                }
+
+                userService.saveUser(userFound);
+                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User updated successfully"));
+            }
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
         }
     }
 
@@ -149,62 +205,7 @@ public class UserController {
         }
     }
 
-    @PutMapping("/update/user")
-    public ResponseEntity<ApiResponse> updateUser(@RequestHeader(value = "Authorization") String authorizationHeader,
-                                                  @RequestPart(value = "user", required = false) @Valid UserDTO userDTO,
-                                                  @RequestPart(value = "file", required = false) MultipartFile file) {
-        try {
-            if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-                String tokenJWT = authorizationHeader.substring(7);
-                Claims claims = userService.extractClaimsFromJWT(tokenJWT);
-                String email = claims.get("email", String.class);
-                UserDTO userFound = userService.findByEmail(email);
 
-                if (userFound.getAccountStatus().equals(AccountStatement.ELIMINADO)) {
-                    return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                            .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Cannot update a deleted user."));
-                }
-
-                if (userFound == null) {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body(new ApiResponse(HttpStatus.NOT_FOUND.value(), "User not found"));
-                }
-
-                // Actualización de la imagen si se proporciona
-                if (file != null && !file.isEmpty()) {
-                    String fileName = file.getOriginalFilename();
-                    if (fileName == null || !userService.isImageFile(fileName)) {
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), "Invalid image file"));
-                    }
-                    Path path = Paths.get(FILE_PATH + fileName);
-                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                    userFound.setProfileImage("/images/" + fileName);
-                }
-
-                // Actualización de los datos del usuario
-                if (userDTO != null) {
-                    if (userDTO.getName() != null) userFound.setName(userDTO.getName());
-                    if (userDTO.getLastName() != null) userFound.setLastName(userDTO.getLastName());
-                    if (userDTO.getUsername() != null) userFound.setUsername(userDTO.getUsername());
-                    if (userDTO.getEmail() != null) userFound.setEmail(userDTO.getEmail());
-                    if (userDTO.getPassword() != null) userFound.setPassword(userDTO.getPassword());
-                    if (userDTO.getAddress() != null) userFound.setAddress(userDTO.getAddress());
-                    if (userDTO.getCellphone() != null) userFound.setCellphone(userDTO.getCellphone());
-                    if (userDTO.getDni() != null) userFound.setDni(userDTO.getDni());
-                }
-
-                userService.saveUser(userFound);
-                return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User updated successfully"));
-            }
-
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Error updating user: " + e.getMessage()));
-        }
-    }
 
     @PutMapping("/updateStatus/user/{id}")
     public ResponseEntity<ApiResponse> updateStatusUser(@RequestHeader(value = "Authorization") String authorizationHeader,
