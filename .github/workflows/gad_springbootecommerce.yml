@@ -24,6 +24,18 @@ jobs:
 
       - name: Build with Maven
         run: mvn clean install -DskipTests  # Opción para omitir las pruebas
+        env:
+          PASSWORD_DB: 'admin123@'
+          PASSWORD_EMAIL: 'jmyp yqgf lkvs jyun'
+          PAYPAL_CLIENT_ID: 'AdFNkDPGFfLYklRn9xSNv_GtyM-j8IJK1_cnc504FVe5f2l68UnNkPmE7t9ZCjefD6xT0El_6ccKqdBi'
+          PAYPAL_CLIENT_SECRET: 'EO8_OVcbQSzKmYrfaaTaBGrNvmDryxa0aRP7GDg-V2PQdaNVgJ9M-_q_4gU_erqjRtzLvKtbt4scHG5H'
+          PAYPAL_MODE: 'sandbox'
+          REDIS_HOST: 'ecommerce.redis.cache.windows.net'
+          REDIS_PASSWORD: 'IlRR5WIdtF2znRa8MquYFRNteuI9lyimsAzCaDuFjSs='
+          REDIS_PORT: '6380'
+          URL_DB: 'jdbc:mysql://ecommerce-pharmacy.mysql.database.azure.com:3306/ecommerce'
+          USER_DB: 'rootadmin123'
+          USER_EMAIL: 'josuealva920@gmail.com'
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
