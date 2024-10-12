@@ -18,7 +18,7 @@ public class EmailServiceImpl implements EmailService {
     private final static String SUBJECT_DELETE = "ELIMINACION DE CUENTA EN EL E-COMMERCE";
     private final static String SUBJECT_UPDATE_PASSWORD = "ACTUALIZACION DE CONTRASEÑA EN EL E-COMMERCE";
 
-    @Value("${USER_EMAIL}")
+    @Value("USER_EMAIL")
     private String user;
 
     @Autowired

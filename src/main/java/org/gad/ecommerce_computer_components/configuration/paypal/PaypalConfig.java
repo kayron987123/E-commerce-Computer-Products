@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class PaypalConfig {
 
-    @Value("${PAYPAL.CLIENT-ID}")
+    @Value("${PAYPAL_CLIENT_ID}")
     private String clientId;
 
-    @Value("${PAYPAL.CLIENT-SECRET}")
+    @Value("${PAYPAL_CLIENT_SECRET}")
     private String clienteSecret;
 
-    @Value("${PAYPAL.MODE}")
+    @Value("${PAYPAL_MODE}")
     private String mode;
 
     @Bean
