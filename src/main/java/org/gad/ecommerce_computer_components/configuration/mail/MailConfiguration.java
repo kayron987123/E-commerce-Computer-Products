@@ -17,10 +17,10 @@ import java.util.Properties;
 @Configuration
 public class MailConfiguration {
 
-    @Value("PASSWORD_EMAIL")
+    @Value("${PASSWORD_EMAIL}")
     private String password;
 
-    @Value("USER_EMAIL")
+    @Value("${USER_EMAIL}")
     private String user;
 
     @Bean
