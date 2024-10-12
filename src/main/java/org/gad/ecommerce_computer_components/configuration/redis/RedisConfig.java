@@ -2,6 +2,7 @@ package org.gad.ecommerce_computer_components.configuration.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -15,11 +16,24 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 public class RedisConfig {
 
+    @Value("${REDIS_HOST}")
+    private String host;
+
+    @Value("${REDIS_PORT}")
+    private int port;
+
+    @Value("${REDIS_PASSWORD}")
+    private String password;
+
     @Bean
     @Primary
     public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration("localhost", 6379);
-        return new JedisConnectionFactory(redisStandaloneConfiguration);
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host, port);
+        redisStandaloneConfiguration.setPassword(password);
+
+        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(redisStandaloneConfiguration);
+        jedisConnectionFactory.setUseSsl(true);
+        return jedisConnectionFactory;
     }
 
     @Bean
