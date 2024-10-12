@@ -24,8 +24,13 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/users/
 }
 ~~~
 **RESPONSE**
-
-![image](https://github.com/user-attachments/assets/dff73c50-9d0e-4fb0-945b-26cdb3694106)
+~~~json
+{
+    "code": 200,
+    "message": "Successful authentication",
+    "token": "[bearer token generado]"
+}
+~~~
 
 ![Static Badge](https://img.shields.io/badge/redis-black?style=for-the-badge&logo=redis)
 ![Static Badge](https://img.shields.io/badge/azure-black?style=for-the-badge&logo=icloud)
