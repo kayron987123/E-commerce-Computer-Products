@@ -332,7 +332,7 @@ Se requiere incluir un **Bearer Token** proporcionado al usuario en el encabezad
   - **Request Body:**
     ```json
     {
-    "shippingAddress" : "San Juan de Lurigancho"
+      "shippingAddress" : "San Juan de Lurigancho"
     }
     ```
   - **Response:**
