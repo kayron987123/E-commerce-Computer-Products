@@ -246,6 +246,123 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/shoppi
 }
 ~~~
 
+### 3.5 CARRITO DE COMPRAS SIN AUTORIZACIÓN
+
+- > **Crear un carrito temporal**
+
+Request URL **POST**
+~~~
+https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/createTempCart/cart
+~~~
+
+**~~Request Body e.g~~**
+
+**RESPONSE e.g**
+~~~json
+{
+    "code": 201,
+    "message": "Cart created",
+    "cartId": "3f64de6c-636a-4bfe-a5b4-46eacb055da0"
+}
+~~~
+
+- > **Agregar productos al carrito sin autorización**
+
+Request URL **POST**
+~~~
+https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/[id_carrito]/addProduct/cart
+~~~
+
+**Request Body e.g**
+~~~
+{
+    "productId": 1,
+    "amount": 10
+}
+~~~
+
+**RESPONSE e.g**
+~~~json
+{
+    "code": 200,
+    "message": "Product added to cart successfully"
+}
+~~~
+
+- > **Listar productos del carrito sin autorización**
+
+Request URL **POST**
+~~~
+https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/getTempCartItems/cart
+~~~
+
+**~~Request Body e.g~~**
+
+**RESPONSE e.g**
+~~~json
+{
+    "code": 200,
+    "message": "Cart items retrieved successfully",
+    "listShoppingCartDTO": [
+        {
+            "id": null,
+            "user": null,
+            "product": {
+                "id": 1,
+                "image": null,
+                "name": "Paracetamol 500mg",
+                "price": 5.50,
+                "stock": 181,
+                "model": "Comprimidos"
+            },
+            "amount": 2
+        }
+    ]
+}
+~~~
+
+
+
+- > **Eliminar productos del carrito sin autorización**
+
+Request URL **POST**
+~~~
+https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/removeProduct/cart
+~~~
+
+**Request Body e.g**
+~~~json
+{
+    "productId": 1,
+    "amount": 1
+}
+~~~
+
+**RESPONSE e.g**
+~~~json
+{
+    "code": 200,
+    "message": "Product removed from cart successfully"
+}
+~~~
+
+- > **Eliminar todos los productos del carrito sin autorización**
+
+Request URL **POST**
+~~~
+https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/clearTempCart/cart
+~~~
+
+**~~Request Body e.g~~**
+
+**RESPONSE e.g**
+~~~json
+{
+    "code": 200,
+    "message": "Cart deleted successfully"
+}
+~~~
+
 ### 4. PASARELA DE PAGO
 - > **Crear Pedido**
 
