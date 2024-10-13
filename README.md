@@ -250,7 +250,7 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/shoppi
 
 - > **Crear un carrito temporal**
 
-Request URL **POST**
+Request URL **GET**
 ~~~
 https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/createTempCart/cart
 ~~~
@@ -291,7 +291,7 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth
 
 - > **Listar productos del carrito sin autorización**
 
-Request URL **POST**
+Request URL **GET**
 ~~~
 https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/getTempCartItems/cart
 ~~~
@@ -321,11 +321,9 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth
 }
 ~~~
 
-
-
 - > **Eliminar productos del carrito sin autorización**
 
-Request URL **POST**
+Request URL **DELETE**
 ~~~
 https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/removeProduct/cart
 ~~~
@@ -348,7 +346,7 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth
 
 - > **Eliminar todos los productos del carrito sin autorización**
 
-Request URL **POST**
+Request URL **DELETE**
 ~~~
 https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/noauth/shopping-carts/{id_carrito}/clearTempCart/cart
 ~~~
@@ -388,8 +386,9 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/order/
 
 - El endpoint "Registrar usuario" generará un token que tiene que ser verificado por el endpoint "verificar token", el token se generará en la caché de redis en la nube, dura 30 segundos aproximadamente y es necesario para completar el registro de usuario.
 - El endpoint "Recuperar contraseña" mandara un código al correo que el usuario ingrese. Este código se tiene que enviar como body request a "verificar token" para que se confirme el cambio de contraseña, de otra manera no se podra cambiar la contraseña.
-- Los tokens que generan los usuarios al iniciar sesión(loguear usuario) son necesarios para poder hacer las peticiones los demas endpoints. Exceptuando los endpoints de: "registrar usuario", "verificar token" y "recuperar contraseña" .
+- Los tokens que generan los usuarios al iniciar sesión("loguear usuario") son necesarios para poder hacer las peticiones de los demas endpoints. Exceptuando los endpoints de: "registrar usuario", "verificar token", "recuperar contraseña" y los endpoints "carrito de compras sin autorización" .
 - Al momento de realizar el pago ("Crear pedido"), el usuario sera enviado a una página en paypal para terminar la transacción de compra.
+- Los endpoints de "carrito sin autorización" son para que cuando el usuario entre a la página y escoga productos aun sin haber iniciado sesión.
 
 #### ESTE PROYECTO UTILIZA:
  ![Static Badge](https://img.shields.io/badge/redis-black?style=for-the-badge&logo=redis)
