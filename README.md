@@ -1,5 +1,6 @@
 # ECOMMERCE PROJECT SUMMARY
-Este es un pequeño resuemen de los ENDPOINTS Y RECURSOS que utiliza esta API ECOMMERCE 
+Este es un pequeño resumen de los ENDPOINTS Y RECURSOS que necesitaras saber para utilizar esta API ECOMMERCE 
+> - URL de la aplicación: https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net
 ## ENDPOINTS
 ### 1. USUARIO
 - > **Registrar usuario**
@@ -275,4 +276,5 @@ https://ecommercespring-a9fthwekhac7f6b6.brazilsouth-01.azurewebsites.net/order/
 
 #### ESTE PROYECTO UTILIZA:
  ![Static Badge](https://img.shields.io/badge/redis-black?style=for-the-badge&logo=redis)
+#### PROYECTO DESPLEGADO EN:
  ![Static Badge](https://img.shields.io/badge/azure-black?style=for-the-badge&logo=icloud)
