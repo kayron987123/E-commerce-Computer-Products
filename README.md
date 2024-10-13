@@ -332,13 +332,7 @@ Se requiere incluir un **Bearer Token** proporcionado al usuario en el encabezad
   - **Request Body:**
     ```json
     {
-      "userId": 1,
-      "products": [
-        {
-          "productId": 1,
-          "quantity": 10
-        }
-      ]
+    "shippingAddress" : "San Juan de Lurigancho"
     }
     ```
   - **Response:**
@@ -346,7 +340,6 @@ Se requiere incluir un **Bearer Token** proporcionado al usuario en el encabezad
     {
       "code": 200,
       "message": "Order created successfully",
-      "orderId": 1
     }
     ```
 ---
