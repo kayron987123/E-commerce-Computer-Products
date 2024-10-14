@@ -29,16 +29,17 @@ public class ProductController {
 
         if (name != null && !name.isEmpty()) {
             try {
-                response = new ApiResponseProduct(true, "Product found", productService.findByProductName(name));
+                response = new ApiResponseProduct(true, "Product found", null,productService.findByProductName(name));
             } catch (Exception e) {
-                response = new ApiResponseProduct(false, e.getMessage(), null);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ApiResponseProduct(false, "Product not found", null, null));
             }
         } else {
-            response = new ApiResponseProduct(true, "Products retrieved", productService.findAllProducts());
+            response = new ApiResponseProduct(true, "Products retrieved", productService.findAllProducts(), null);
         }
         return ResponseEntity.ok(response);
     }
 
+    /*
     @PostMapping("/save/")
     public ResponseEntity<ApiResponseProduct> createProduct(@RequestPart("product") ProductDTO productDTO,
                                                             @RequestPart(value = "image",required = false) MultipartFile image) {
@@ -88,4 +89,5 @@ public class ProductController {
             return ResponseEntity.badRequest().body(response);
         }
     }
+    */
 }

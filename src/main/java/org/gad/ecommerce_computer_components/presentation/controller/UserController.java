@@ -52,8 +52,7 @@ public class UserController {
     private AzureBlobService azureBlobService;
 
     @PostMapping("/login/user")
-    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody @Valid UserRequest userRequest,
-                                                      @RequestParam String tempCartId) {
+    public ResponseEntity<ApiResponseToken> loginUser(@RequestBody @Valid UserRequest userRequest) {
         try {
             UserDTO userDTO = userService.findByUsername(userRequest.getUsername());
             if (userDTO.getAccountStatus().equals(AccountStatement.ELIMINADO)) {
@@ -62,12 +61,13 @@ public class UserController {
             }
 
             String token = userService.authenticateUser(userRequest.getUsername(), userRequest.getPassword());
-
+            /*
             // Transferir carrito temporal al usuario si existe tempCartId
             if (tempCartId != null && !tempCartId.isEmpty()) {
                 Long userId = shoppingCartService.extractUserIdFromToken(token);
                 cartTransferService.transferTempCartToUserCart(tempCartId, userId);
             }
+            */
 
             return ResponseEntity.ok(new ApiResponseToken(HttpStatus.OK.value(), "Successful authentication", token));
         } catch (UsernameNotFoundException e) {

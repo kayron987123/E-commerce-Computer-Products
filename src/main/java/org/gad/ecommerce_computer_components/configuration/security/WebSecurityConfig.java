@@ -43,6 +43,9 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/users/updateStatus/user/{id}").hasRole(ADMINISTRADOR.name())
                         .requestMatchers(HttpMethod.POST, "/users/logout/user").hasRole(USUARIO.name())
 
+                        //ForProducts
+                        .requestMatchers(HttpMethod.GET, "/products/list/").permitAll()
+
                         //ForShoppingCart
                         .requestMatchers(HttpMethod.POST, "/shopping-carts/addProduct/cart").hasRole(USUARIO.name())
                         .requestMatchers(HttpMethod.GET, "/shopping-carts/getListCarts/cart").hasRole(USUARIO.name())

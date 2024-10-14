@@ -1,6 +1,10 @@
 package org.gad.ecommerce_computer_components.presentation.dto.response;
 
 import lombok.*;
+import org.gad.ecommerce_computer_components.persistence.entity.Product;
+import org.gad.ecommerce_computer_components.presentation.dto.request.ProductDTO;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -10,5 +14,6 @@ import lombok.*;
 public class ApiResponseProduct {
     private boolean success;
     private String message;
-    private Object data;
+    private List<ProductDTO> data;
+    private ProductDTO productDTO;
 }
