@@ -16,7 +16,6 @@ import java.nio.file.StandardCopyOption;
 
 @RestController
 @RequestMapping("/product")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ProductController {
     private static final String INVALIDATION_MESSAGE = "Invalid File Type";
     private static final String FILE_PATH = "src/main/resources/static/images/";

@@ -30,7 +30,7 @@ import java.util.Optional;
 
 import static org.gad.ecommerce_computer_components.persistence.enums.Role.ADMINISTRADOR;
 
-@CrossOrigin(origins = "http://localhost:3000")
+
 @RestController
 @RequestMapping("/users")
 public class UserController {

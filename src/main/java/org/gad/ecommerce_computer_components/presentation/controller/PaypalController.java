@@ -6,7 +6,6 @@ import org.gad.ecommerce_computer_components.service.interfaces.PaypalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/paypal")
 public class PaypalController {
