@@ -92,7 +92,6 @@ public class UserController {
                             .body(new ApiResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()));
                 }
             }
-
             userService.saveUserInRedis(userDTO, EMAIL_SEND_TOKEN);
             return ResponseEntity.ok(new ApiResponse(HttpStatus.OK.value(), "User successfully registered and Token generated"));
         } catch (IOException e) {
