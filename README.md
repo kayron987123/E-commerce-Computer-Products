@@ -339,7 +339,7 @@ Se requiere incluir un **Bearer Token** proporcionado al usuario en el encabezad
     ```json
     {
       "code": 200,
-      "message": "Order created successfully",
+      "message": "url de paypal para pagar",
     }
     ```
 ---
